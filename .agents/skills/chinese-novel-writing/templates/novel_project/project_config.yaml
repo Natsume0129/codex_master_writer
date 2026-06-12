@@ -1,0 +1,17 @@
+project_name: ""
+language: "zh-CN"
+primary_mode: "original"
+current_branch: "main"
+current_chapter: null
+chapter_length_target: null
+output_mode: "draft_with_notes"
+automation_level: "medium"
+auto_update_bible: true
+auto_generate_context_pack: true
+auto_generate_scene_outline: true
+auto_review_after_draft: true
+auto_rewrite_after_review: false
+confirm_major_plot_changes: true
+created_at: ""
+updated_at: ""
+

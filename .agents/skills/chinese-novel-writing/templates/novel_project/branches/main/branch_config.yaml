@@ -1,0 +1,9 @@
+branch_name: "main"
+branch_type: "main"
+title: "主线"
+base_branch: ""
+divergence_point: ""
+created_at: ""
+status: "active"
+notes: "默认续写主线。"
+

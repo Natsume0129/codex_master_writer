@@ -1,0 +1,13 @@
+foreshadowing:
+  - id: "foreshadowing_001"
+    content: ""
+    first_appeared: ""
+    reinforced: []
+    status: "uncertain"
+    likely_payoff_range: ""
+    related_entities: []
+    possible_payoffs: []
+    actual_payoff: ""
+    source: []
+    confidence: "low"
+

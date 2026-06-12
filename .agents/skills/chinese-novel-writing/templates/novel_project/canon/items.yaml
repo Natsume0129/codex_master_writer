@@ -1,0 +1,13 @@
+items:
+  - id: ""
+    name: ""
+    owner: ""
+    state:
+      value: ""
+      status: "uncertain"
+      source: []
+      confidence: "low"
+    first_seen: ""
+    last_seen: ""
+    notes: ""
+

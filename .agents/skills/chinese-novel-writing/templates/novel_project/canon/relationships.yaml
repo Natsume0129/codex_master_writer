@@ -1,0 +1,12 @@
+relationships:
+  - from: ""
+    to: ""
+    relation_type: "unknown"
+    public_status: ""
+    private_status: ""
+    knowledge_asymmetry: ""
+    stage: ""
+    source: []
+    confidence: "low"
+    branch: "canon"
+

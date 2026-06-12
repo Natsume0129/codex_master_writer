@@ -1,0 +1,12 @@
+locations:
+  - id: ""
+    name: ""
+    description:
+      value: ""
+      status: "uncertain"
+      source: []
+      confidence: "low"
+    current_state: ""
+    related_characters: []
+    notes: ""
+

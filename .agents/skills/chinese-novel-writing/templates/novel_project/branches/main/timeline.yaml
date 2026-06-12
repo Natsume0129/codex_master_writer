@@ -1,0 +1,14 @@
+timeline:
+  - id: "event_001"
+    story_time: ""
+    narrative_order: 1
+    chapter: ""
+    event: ""
+    characters: []
+    location: ""
+    causes: []
+    effects: []
+    branch: "main"
+    source: []
+    confidence: "low"
+

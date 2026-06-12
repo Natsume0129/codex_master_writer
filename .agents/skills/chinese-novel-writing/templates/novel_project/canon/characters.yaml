@@ -1,0 +1,26 @@
+characters:
+  example_character:
+    name: ""
+    aliases: []
+    role: "unknown"
+    status:
+      value: "unknown"
+      fact_status: "uncertain"
+      source: []
+      confidence: "low"
+    identity:
+      value: ""
+      fact_status: "uncertain"
+      source: []
+      confidence: "low"
+    goals: []
+    fears: []
+    secrets: []
+    abilities: []
+    current_state: ""
+    relationships: []
+    speech_style: ""
+    first_appearance: ""
+    last_seen: ""
+    notes: "模板示例，正式使用时可删除。"
+

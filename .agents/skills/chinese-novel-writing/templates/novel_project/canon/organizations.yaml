@@ -1,0 +1,14 @@
+organizations:
+  - id: ""
+    name: ""
+    role_in_story: ""
+    public_goal: ""
+    hidden_goal: ""
+    status:
+      value: ""
+      status: "uncertain"
+      source: []
+      confidence: "low"
+    members: []
+    notes: ""
+
