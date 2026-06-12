@@ -62,6 +62,8 @@ If `requires_user_confirmation` is non-empty, `--confirm-major` is also required
 
 The helper creates timestamped backups under `backups/`, appends `changelog.md`, and marks the patch `status: applied` when writing succeeds.
 
+`mark-done --stage story_bible_patches` only updates import batch metadata and may warn about a missing patch skeleton. It never calls `apply-patch`, never confirms `requires_user_confirmation`, and never edits `canon/`.
+
 Automatically mergeable in v0.4:
 
 - `updates.timeline` -> `branches/<branch>/timeline.yaml`

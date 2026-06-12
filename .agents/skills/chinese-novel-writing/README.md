@@ -25,6 +25,20 @@ v0.4 keeps the existing v0.3.1 happy path and adds import-closure and quality wo
 
 Manual selectors still win over auto-selected selectors. Empty auto-selection is allowed and records `missing_sections` instead of failing.
 
+## v0.4.1 Bugfix Notes
+
+v0.4.1 is a small bugfix release. It keeps `schema_version: "0.4"` and does not add a new schema version.
+
+- `mark-done` is now stage-aware. It preserves existing `chunk_cards` behavior, updates chapter progress for `chapter_cards`, and only updates batch metadata for `volume_summaries` and `story_bible_patches`.
+- `create-quality-report` resolves `--draft`, `--context-pack`, and `--output` relative to `--project-root` when those paths are not absolute.
+- `validate` may print `Suggestions`. Suggestions are workflow guidance, not failure. Hard validation failure is determined by `Errors`; `Errors: none` is the structural acceptance signal.
+
+Project-relative quality report paths:
+
+```bash
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-quality-report --project-root ./tmp/demo_novel --branch main --chapter 1 --draft branches/main/drafts/chapter_001.md --context-pack context_packs/latest_context_pack.md --force
+```
+
 Minimal v0.4 verification after the old happy path:
 
 ```bash
@@ -127,6 +141,12 @@ python .agents/skills/chinese-novel-writing/scripts/novel_project.py validate --
 ```
 
 warnings 不代表失败。`schema_version` 缺失会 warning，不会让旧项目直接失败。
+
+`validate` output has three levels:
+
+- `Errors`: structural failures. `Errors: none` is the hard pass condition.
+- `Warnings`: review these, but they do not always block work.
+- `Suggestions`: next-step workflow guidance; suggestions can exist in a valid project.
 
 ## 手动验证 Happy Path
 

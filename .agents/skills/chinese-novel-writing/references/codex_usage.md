@@ -64,6 +64,13 @@ After chunk cards are created:
 python .agents/skills/chinese-novel-writing/scripts/novel_project.py mark-done --project-root ./projects/my-novel --batch-id batch_0001 --status done
 ```
 
+`mark-done` is stage-aware in v0.4.1. When `--stage` is omitted, it uses batch metadata:
+
+- `chunk_cards`: updates batch metadata, chunk statuses, chunk card paths, and chapter readiness.
+- `chapter_cards`: updates batch metadata and `imports/extraction_progress.yaml` chapter records. Use `--chapter-id` or `--chapter-card` for single-chapter updates.
+- `volume_summaries`: updates batch metadata and optional `--output`; it does not edit canon.
+- `story_bible_patches`: updates batch metadata and checks `patch_skeleton`; it does not apply patches or edit canon.
+
 Check import closure and create later-stage batches:
 
 ```bash
@@ -109,6 +116,12 @@ Create a quality report template after drafting or before detailed review:
 python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-quality-report --project-root ./projects/my-novel --branch main --chapter 12 --template-only --force
 ```
 
+Relative `--draft`, `--context-pack`, and `--output` paths are resolved under `--project-root`:
+
+```bash
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-quality-report --project-root ./projects/my-novel --branch main --chapter 12 --draft branches/main/drafts/chapter_012.md --context-pack context_packs/latest_context_pack.md --force
+```
+
 ## Rewrite Plot
 
 Create an isolated branch for what-if or divergence requests:
@@ -147,4 +160,4 @@ Do not automatically confirm major plot changes. If `requires_user_confirmation`
 python .agents/skills/chinese-novel-writing/scripts/novel_project.py validate --project-root ./projects/my-novel
 ```
 
-Validation errors should stop the workflow. Warnings, including missing `schema_version` in older projects, should be reviewed but do not necessarily block work.
+Validation errors should stop the workflow. Warnings, including missing `schema_version` in older projects, should be reviewed but do not necessarily block work. Suggestions are workflow guidance only; a valid project can still have suggestions. Use `Errors: none` as the hard structural pass condition.

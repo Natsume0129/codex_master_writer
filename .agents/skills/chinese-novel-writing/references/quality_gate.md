@@ -51,6 +51,12 @@ Use `create-quality-report` when a draft or outline needs a durable review artif
 python scripts/novel_project.py create-quality-report --project-root ./projects/my-novel --branch main --chapter 12 --template-only --force
 ```
 
+Relative `--draft`, `--context-pack`, and `--output` paths are resolved under `--project-root`:
+
+```bash
+python scripts/novel_project.py create-quality-report --project-root ./projects/my-novel --branch main --chapter 12 --draft branches/main/drafts/chapter_012.md --context-pack context_packs/latest_context_pack.md --force
+```
+
 Default output:
 
 ```text

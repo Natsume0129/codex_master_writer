@@ -31,10 +31,13 @@ Steps:
 7. Build chapter cards with `scripts/novel_project.py create-chapter-card-batch` after all chunks for a chapter are done.
 8. Build volume summaries with `scripts/novel_project.py create-volume-summary-batch` after chapter cards are reviewed.
 9. Create story-bible patch candidates with `scripts/novel_project.py create-bible-patch-batch`; do not edit canon directly.
-10. Run `scripts/novel_project.py build-indexes` after extracted cards or canon files change.
-11. Mark extracted facts as `confirmed` only when directly supported by source text. Use `inferred` or `uncertain` for model interpretation.
+10. Use `scripts/novel_project.py mark-done` for later-stage batch metadata after reviewing generated chapter cards, volume summaries, or story-bible patch candidates.
+11. Run `scripts/novel_project.py build-indexes` after extracted cards or canon files change.
+12. Mark extracted facts as `confirmed` only when directly supported by source text. Use `inferred` or `uncertain` for model interpretation.
 
 Output: import report, missing sections, and suggested next extraction batch.
+
+Validation may include workflow suggestions such as the next batch to process. Treat suggestions as guidance, not failure.
 
 ## continue_story
 

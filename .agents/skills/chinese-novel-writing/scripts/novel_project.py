@@ -227,20 +227,22 @@ def command_create_bible_patch_batch(args: argparse.Namespace) -> int:
 
 
 def command_mark_done(args: argparse.Namespace) -> int:
-    if not args.batch_id and not args.chunk_id:
-        print("error: provide --batch-id or --chunk-id", file=sys.stderr)
+    if not args.batch_id and not args.chunk_id and not args.chapter_id:
+        print("error: provide --batch-id, --chunk-id, or --chapter-id", file=sys.stderr)
         return 2
     script_args = [
         "--project",
         path_text(args.project_root),
-        "--stage",
-        args.stage,
         "--status",
         args.status,
     ]
+    add_value(script_args, "--stage", args.stage)
     add_value(script_args, "--batch-id", args.batch_id)
     add_value(script_args, "--chunk-id", args.chunk_id)
+    add_value(script_args, "--chapter-id", args.chapter_id)
     add_value(script_args, "--chunk-card", args.chunk_card)
+    add_value(script_args, "--chapter-card", args.chapter_card)
+    add_value(script_args, "--output", args.output)
     add_value(script_args, "--error", args.error)
     run_step("Mark extraction progress", "mark_extraction_done.py", script_args)
     return 0
@@ -482,8 +484,11 @@ def build_parser() -> argparse.ArgumentParser:
     project_arg(mark_done)
     mark_done.add_argument("--batch-id")
     mark_done.add_argument("--chunk-id")
+    mark_done.add_argument("--chapter-id")
     mark_done.add_argument("--chunk-card", type=Path)
-    mark_done.add_argument("--stage", default="chunk_cards")
+    mark_done.add_argument("--chapter-card", type=Path)
+    mark_done.add_argument("--output", type=Path)
+    mark_done.add_argument("--stage", default="", help="Defaults to batch metadata stage when omitted.")
     mark_done.add_argument(
         "--status",
         required=True,

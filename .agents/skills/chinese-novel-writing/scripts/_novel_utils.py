@@ -176,6 +176,15 @@ def safe_relative(path: Path, root: Path) -> str:
         return str(path)
 
 
+def resolve_project_relative(project: Path, path: Path | str | None) -> Path | None:
+    if path is None or str(path) == "":
+        return None
+    candidate = Path(path)
+    if candidate.is_absolute():
+        return candidate
+    return (project / candidate).resolve()
+
+
 def chapter_number(chapter: object) -> int | None:
     match = re.search(r"(\d+)", str(chapter or ""))
     return int(match.group(1)) if match else None

@@ -7,7 +7,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from _novel_utils import normalize_chapter_label, now_iso, safe_relative
+from _novel_utils import normalize_chapter_label, now_iso, resolve_project_relative, safe_relative
 
 
 def default_draft(project: Path, branch: str, chapter_label: str) -> Path:
@@ -142,13 +142,24 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     args.chapter_label = normalize_chapter_label(args.chapter)
-    draft = args.draft.resolve() if args.draft else default_draft(project, args.branch, args.chapter_label)
-    context_pack = args.context_pack.resolve() if args.context_pack else default_context_pack(project)
+    draft = (
+        resolve_project_relative(project, args.draft)
+        if args.draft
+        else default_draft(project, args.branch, args.chapter_label)
+    )
+    assert draft is not None
+    context_pack = (
+        resolve_project_relative(project, args.context_pack)
+        if args.context_pack
+        else default_context_pack(project)
+    )
+    assert context_pack is not None
     output = (
-        args.output.resolve()
+        resolve_project_relative(project, args.output)
         if args.output
         else branch_dir / "reviews" / f"{args.chapter_label}_quality_report.md"
     )
+    assert output is not None
     if output.exists() and not args.force:
         print(f"error: output exists: {output}. Use --force to overwrite.", file=sys.stderr)
         return 1
