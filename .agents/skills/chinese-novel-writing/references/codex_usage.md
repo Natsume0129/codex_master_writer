@@ -21,10 +21,27 @@ Codex should then process chapters/chunks in batches and create summaries, cards
 Split chapters into chunks:
 
 ```bash
-python .agents/skills/chinese-novel-writing/scripts/split_chunks.py --project ./projects/my-novel --chunk-size 6000 --overlap 500
+python .agents/skills/chinese-novel-writing/scripts/split_chunks.py --project ./projects/my-novel --chunk-size 6000 --overlap 500 --force --clean
 ```
 
-Then use `references/extraction_prompts.md` to process `imports/chunk_manifest.yaml` in small batches.
+Initialize import progress and create the next batch:
+
+```bash
+python .agents/skills/chinese-novel-writing/scripts/init_extraction_progress.py --project ./projects/my-novel --force
+python .agents/skills/chinese-novel-writing/scripts/create_extraction_batch.py --project ./projects/my-novel --stage chunk_cards --batch-size 5 --force
+```
+
+Then use `references/extraction_prompts.md` to process only the chunks listed in `imports/batches/batch_0001_chunk_cards.md`. After creating the chunk cards, update progress:
+
+```bash
+python .agents/skills/chinese-novel-writing/scripts/mark_extraction_done.py --project ./projects/my-novel --batch-id batch_0001 --status done
+```
+
+Rebuild indexes after extracted cards or canon files change:
+
+```bash
+python .agents/skills/chinese-novel-writing/scripts/build_indexes.py --project ./projects/my-novel --source all --force
+```
 
 ## Continue a Story
 
@@ -56,6 +73,18 @@ python .agents/skills/chinese-novel-writing/scripts/create_patch.py --project ./
 
 Review the patch before applying any bible updates.
 
+Dry-run a safe apply plan:
+
+```bash
+python .agents/skills/chinese-novel-writing/scripts/apply_patch.py --project ./projects/my-novel --patch ./projects/my-novel/pending_updates/chapter_012_patch.yaml
+```
+
+Apply only after review:
+
+```bash
+python .agents/skills/chinese-novel-writing/scripts/apply_patch.py --project ./projects/my-novel --patch ./projects/my-novel/pending_updates/chapter_012_patch.yaml --confirm
+```
+
 ## Validate a Project
 
 ```bash
@@ -63,6 +92,19 @@ python .agents/skills/chinese-novel-writing/scripts/validate_project.py --projec
 ```
 
 Use validation output to find missing directories, missing files, or obviously malformed YAML.
+
+## Wrapper Commands
+
+`scripts/novel_project.py` exposes the same helpers as subcommands:
+
+```bash
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py init --name my-novel --output ./projects/my-novel
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py split-chunks --project ./projects/my-novel --force --clean
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py init-progress --project ./projects/my-novel --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-batch --project ./projects/my-novel --stage chunk_cards --batch-size 5 --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py build-indexes --project ./projects/my-novel --source all --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py apply-patch --project ./projects/my-novel --patch ./projects/my-novel/pending_updates/chapter_012_patch.yaml
+```
 
 ## Later Calls
 

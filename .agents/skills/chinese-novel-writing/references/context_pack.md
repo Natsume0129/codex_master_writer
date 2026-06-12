@@ -2,7 +2,7 @@
 
 A context pack is the only approved input bundle for continuation, drafting, rewriting, and review. It contains task-relevant context, not the whole project.
 
-## v0.2 Builder Inputs
+## v0.3 Builder Inputs
 
 `build_context_pack.py` accepts selectors so Codex can include relevant entities without dumping whole bible files:
 
@@ -11,6 +11,23 @@ python scripts/build_context_pack.py --project ./projects/my-novel --branch main
 ```
 
 If selectors are absent or indexes do not contain matching entries, the builder records `missing_sections` instead of inserting large unrelated snippets.
+
+When `--chapter` is provided, the builder automatically looks for:
+
+```text
+branches/<branch>/chapter_function_cards/chapter_XXX_function_card.yaml
+```
+
+Only the active branch's function card is loaded. The card is included as `current_arc.chapter_function_card`, and `chapter_goal` is also copied to `current_arc.chapter_goal` / `current_arc.current_chapter_goal`.
+
+Entity retrieval is conservative:
+
+1. Check the relevant `indexes/*_index.yaml`.
+2. Use matching ids/names/aliases from the index to find full source blocks in `canon/*.yaml`.
+3. Fall back to short line matches only when a complete block cannot be found.
+4. Record retrieval choices in `retrieval_notes`.
+
+Indexes are navigation aids, not durable truth. If index and canon disagree, prefer source-backed canon entries and mark the conflict for review.
 
 ## Default Structure
 
@@ -30,6 +47,8 @@ context_pack:
     current_outline: ""
     current_volume_summary: ""
     current_chapter_goal: ""
+    chapter_goal: ""
+    chapter_function_card: ""
   recent_context:
     previous_chapter_summaries: []
     previous_chapter_ending_excerpt: ""
@@ -55,6 +74,7 @@ context_pack:
     must_not_change: []
     must_not_reveal_yet: []
     branch_boundaries: []
+  retrieval_notes: []
   missing_sections: []
 ```
 
@@ -90,5 +110,6 @@ Use the draft or outline being reviewed, branch-local timeline, relevant bible f
 - Do not include deprecated facts unless the user asks for history.
 - Do not include full `raw_text/full_text.txt`.
 - Do not include other branch timelines or branch-only character states unless comparing branches is the task.
+- Do not include other branch chapter function cards.
 - Do not include all bible files by default; summarize relevant entries.
 - Do not default to the first 4000 characters of `characters.yaml`, `items.yaml`, or other bible files as relevant context.

@@ -1,0 +1,38 @@
+project:
+  name: ""
+  source_manifest: "imports/chunk_manifest.yaml"
+  created_at: ""
+  updated_at: ""
+
+settings:
+  batch_size: 10
+  active_stage: "chunk_cards"
+  stages: ["chunk_cards", "chapter_cards", "volume_summaries", "story_bible_patches", "indexes"]
+
+chunks:
+  # chunk_id:
+  #   chapter_id: ""
+  #   source_file: ""
+  #   output_file: ""
+  #   status: "pending | queued | processing | done | failed | skipped"
+  #   batch_id: ""
+  #   chunk_card: ""
+  #   error: ""
+  #   updated_at: ""
+
+chapters:
+  # chapter_id:
+  #   status: "pending | partial | ready_for_chapter_card | done | failed"
+  #   chunk_ids: []
+  #   chapter_card: ""
+  #   updated_at: ""
+
+batches:
+  # batch_id:
+  #   stage: ""
+  #   status: "queued | processing | done | failed"
+  #   chunk_ids: []
+  #   created_at: ""
+  #   completed_at: ""
+  #   notes: ""
+

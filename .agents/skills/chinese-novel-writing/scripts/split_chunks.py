@@ -49,7 +49,7 @@ def split_text(text: str, chunk_size: int, overlap: int) -> list[tuple[int, int,
             line_break = normalized.rfind("\n", start + max(1, chunk_size // 2), hard_end)
             sentence_break = max(
                 normalized.rfind(mark, start + max(1, chunk_size // 2), hard_end)
-                for mark in ("。", "！", "？", "；")
+                for mark in ("\u3002", "\uff1b", "\uff01", "\uff1f")
             )
             boundary = max(paragraph_break, line_break, sentence_break)
             if boundary > start:
@@ -109,6 +109,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--chunk-size", type=int, default=6000, help="Target chunk size in characters.")
     parser.add_argument("--overlap", type=int, default=500, help="Overlap between adjacent chunks.")
     parser.add_argument("--force", action="store_true", help="Overwrite existing chunk files.")
+    parser.add_argument("--clean", action="store_true", help="Delete old *_chunk_*.txt files before splitting. Requires --force.")
     return parser.parse_args(argv)
 
 
@@ -119,6 +120,16 @@ def main(argv: list[str] | None = None) -> int:
         if not chapter_dir.is_dir():
             raise FileNotFoundError(f"chapter directory not found: {chapter_dir}")
         output.mkdir(parents=True, exist_ok=True)
+        if args.clean and not args.force:
+            raise ValueError("--clean requires --force")
+        if args.clean:
+            removed = 0
+            for old_chunk in output.glob("*_chunk_*.txt"):
+                if old_chunk.is_file():
+                    old_chunk.unlink()
+                    removed += 1
+            if removed:
+                print(f"Cleaned old chunk files: {removed}")
         if any(output.glob("*_chunk_*.txt")) and not args.force:
             raise FileExistsError(f"chunk files already exist in {output}. Use --force to overwrite.")
 
@@ -168,4 +179,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

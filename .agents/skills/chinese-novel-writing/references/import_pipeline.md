@@ -8,6 +8,8 @@ The import pipeline stores source text, splits it, and creates layered summaries
 raw_text/full_text.txt
   -> raw_text/chapters/chapter_0001.txt
   -> chunks/chapter_0001_chunk_0001.txt
+  -> imports/extraction_progress.yaml
+  -> imports/batches/batch_0001_chunk_cards.md
   -> extracted/chunk_cards/chapter_0001_chunk_0001.yaml
   -> extracted/chapter_cards/chapter_0001.yaml
   -> extracted/volume_summaries/volume_0001.md
@@ -33,10 +35,36 @@ The split is conservative. It preserves original text and reports suspicious emp
 Run chunk splitting after chapter splitting:
 
 ```bash
-python scripts/split_chunks.py --project ./projects/my-novel --chunk-size 6000 --overlap 500
+python scripts/split_chunks.py --project ./projects/my-novel --chunk-size 6000 --overlap 500 --force --clean
 ```
 
 `split_chunks.py` writes `imports/chunk_manifest.yaml`. Each chunk records `chunk_id`, `chapter_id`, `source_file`, `output_file`, `start_char`, `end_char`, `char_count`, `overlap_prev`, and `overlap_next`.
+
+Use `--clean` only with `--force`. It removes old generated `*_chunk_*.txt` files from the chunk output directory before regenerating chunks. It does not remove raw source text or extracted cards.
+
+## Extraction Progress
+
+Initialize progress after chunking:
+
+```bash
+python scripts/init_extraction_progress.py --project ./projects/my-novel --force
+```
+
+This creates `imports/extraction_progress.yaml` with `project`, `settings`, `chunks`, `chapters`, and `batches` sections. The progress file is the checkpoint for resuming a long import. Chunk states are `pending`, `queued`, `processing`, `done`, `failed`, and `skipped`.
+
+Create a small batch without reading chunk text:
+
+```bash
+python scripts/create_extraction_batch.py --project ./projects/my-novel --stage chunk_cards --batch-size 5 --force
+```
+
+The batch files are written under `imports/batches/`. Codex should read only the chunk files listed in that batch, generate `extracted/chunk_cards/<chunk_id>.yaml`, and then update progress:
+
+```bash
+python scripts/mark_extraction_done.py --project ./projects/my-novel --batch-id batch_0001 --status done
+```
+
+Use `--retry-failed` with `create_extraction_batch.py` only when intentionally retrying failed chunks.
 
 Long chapters should be split further before Codex analysis. A chunk card should include:
 
@@ -58,6 +86,16 @@ The import process should leave:
 - `imports/import_manifest.yaml`: split results and warnings.
 - `imports/import_report.md`: Codex-written summary of completed import work.
 - `imports/conflicts_found.md`: possible conflicts discovered during extraction.
+
+## Indexes
+
+After chunk cards and chapter cards exist, rebuild lightweight navigation indexes:
+
+```bash
+python scripts/build_indexes.py --project ./projects/my-novel --source all --force
+```
+
+Indexes help context retrieval, but they are not source of truth. Canon files, extracted cards, and explicit user statements remain the source-backed facts.
 
 ## What Scripts Do Not Do
 

@@ -24,11 +24,14 @@ Map each request to the nearest workflow in `references/workflows.md`. If the re
 ## Internal Pipelines
 
 - `import_pipeline`: save raw text, split chapters/chunks, create source-tracked cards, then build bible/index placeholders.
+- `extraction_progress_manager`: track chunk/chapter/batch extraction state in `imports/extraction_progress.yaml`.
+- `index_builder`: rebuild lightweight navigation indexes from extracted cards and canon files; indexes are not source of truth.
 - `context_pack_builder`: assemble only task-relevant facts, summaries, and constraints.
 - `drafting_pipeline`: write from chapter goals and context pack, then run quality checks.
 - `continuation_pipeline`: continue only after branch and recent context are known.
 - `plot_rewrite_pipeline`: create or use an alternate branch before changing causal development.
 - `post_write_update_pipeline`: generate pending patch files instead of directly editing bible files.
+- `patch_apply_pipeline`: dry-run pending patches first, then apply only limited safe updates after explicit confirmation.
 - `quality_gate`: check consistency, branch boundaries, style drift, pacing, and major plot-control risks.
 
 ## P0 Hard Rules
@@ -66,10 +69,15 @@ Use scripts for deterministic file work:
 - `scripts/init_project.py` creates a project from templates.
 - `scripts/split_chapters.py` splits imported text and writes an import manifest.
 - `scripts/split_chunks.py` splits chapter files into overlapping chunks and writes a chunk manifest.
+- `scripts/init_extraction_progress.py` initializes `imports/extraction_progress.yaml`.
+- `scripts/create_extraction_batch.py` creates the next small extraction batch prompt and metadata file.
+- `scripts/mark_extraction_done.py` marks chunks or batches as queued, processing, done, failed, or skipped.
+- `scripts/build_indexes.py` rebuilds lightweight navigation indexes without external services.
 - `scripts/create_branch.py` creates isolated alternate-plot branches.
 - `scripts/create_chapter_function_card.py` creates branch-local chapter function cards.
 - `scripts/build_context_pack.py` creates a context-pack skeleton without reading full raw text.
 - `scripts/create_patch.py` creates pending post-write update patches.
+- `scripts/apply_patch.py` dry-runs and then applies limited safe patch updates after confirmation.
 - `scripts/validate_project.py` checks project structure.
 
 Scripts do not perform AI extraction, style imitation, or plot reasoning. Those remain Codex/model tasks guided by the references.
@@ -83,7 +91,7 @@ Scripts do not perform AI extraction, style imitation, or plot reasoning. Those 
 
 ## Forbidden Behaviors
 
-- Do not turn this skill into a web app, database service, or external API client.
+- Do not turn this skill into a web app, database service, external API client, or networked tool.
 - Do not place real long-form novel samples inside the skill package.
 - Do not hard-code one genre, author style, or named work.
 - Do not merge branch facts into canon/main without explicit user confirmation.

@@ -13,10 +13,15 @@ SCRIPT_MAP = {
     "init": "init_project.py",
     "split-import": "split_chapters.py",
     "split-chunks": "split_chunks.py",
+    "init-progress": "init_extraction_progress.py",
+    "create-batch": "create_extraction_batch.py",
+    "mark-done": "mark_extraction_done.py",
+    "build-indexes": "build_indexes.py",
     "new-branch": "create_branch.py",
     "create-function-card": "create_chapter_function_card.py",
     "build-context-pack": "build_context_pack.py",
     "create-patch": "create_patch.py",
+    "apply-patch": "apply_patch.py",
     "validate": "validate_project.py",
 }
 

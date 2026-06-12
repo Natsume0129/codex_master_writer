@@ -2,6 +2,17 @@
 
 Use these prompts when importing a long Chinese novel in batches. Do not process the whole novel at once. Read only the chunk files for the current batch and write structured outputs with source/status/confidence.
 
+## Batch Import Prompt
+
+```text
+请使用 chinese-novel-writing skill，处理 imports/batches/<batch_id>_chunk_cards.md 中列出的 chunk。
+只读取该 batch 文件列出的 chunk 原文，不要读取 raw_text/full_text.txt，也不要一次性读取整本小说。
+为每个 chunk 生成 extracted/chunk_cards/<chunk_id>.yaml。
+每条重要事实必须包含 source、status、confidence。
+不要把推测写成 confirmed；不要直接修改 canon 或 main 分支资料库。
+完成后用 scripts/mark_extraction_done.py 更新 extraction_progress.yaml。
+```
+
 ## Status Rules
 
 - `confirmed`: the source text explicitly supports the fact.

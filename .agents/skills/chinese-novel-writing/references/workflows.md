@@ -24,10 +24,14 @@ Steps:
 
 1. Save raw source text without destructive cleanup.
 2. Run `scripts/split_chapters.py` when a text file is available.
-3. Run `scripts/split_chunks.py` to split long chapters into overlapping chunks.
-4. Build chunk cards and chapter cards in batches using `references/extraction_prompts.md`. Do not read the whole source into context.
-5. Create chapter summaries, volume summaries, story bible drafts, plot nodes, indexes, and import report.
-6. Mark extracted facts as `confirmed` only when directly supported by source text. Use `inferred` or `uncertain` for model interpretation.
+3. Run `scripts/split_chunks.py --force --clean` to split long chapters into overlapping chunks.
+4. Run `scripts/init_extraction_progress.py` to create the resumable checkpoint file.
+5. Run `scripts/create_extraction_batch.py` to create a small batch prompt and metadata file.
+6. Build chunk cards and chapter cards in batches using `references/extraction_prompts.md`. Do not read the whole source into context.
+7. Run `scripts/mark_extraction_done.py` after chunk cards are created, or mark failures with an error note.
+8. Create chapter summaries, volume summaries, story bible drafts, plot nodes, indexes, and import report.
+9. Run `scripts/build_indexes.py` after extracted cards or canon files change.
+10. Mark extracted facts as `confirmed` only when directly supported by source text. Use `inferred` or `uncertain` for model interpretation.
 
 Output: import report, missing sections, and suggested next extraction batch.
 
@@ -38,11 +42,12 @@ Input: "continue", "write next chapter", or a target chapter request.
 Steps:
 
 1. Confirm active branch from `project_config.yaml` or user request.
-2. Build context pack with `scripts/build_context_pack.py`, then let Codex fill relevant missing sections from summaries and bible files.
-3. If chapter goal is missing, create a chapter function card before writing with `scripts/create_chapter_function_card.py`.
+2. If chapter goal is missing, create a chapter function card before writing with `scripts/create_chapter_function_card.py`.
+3. Build context pack with `scripts/build_context_pack.py`; it automatically loads the active branch's chapter function card when present.
 4. Draft according to style guide, current outline, recent summaries, and constraints.
 5. Run quality gate.
 6. Generate post-write patch with `scripts/create_patch.py` and fill candidate updates.
+7. Dry-run `scripts/apply_patch.py` if the user wants to apply safe post-write updates.
 
 Output: draft according to output mode, short quality summary, and patch summary.
 
@@ -100,6 +105,7 @@ Steps:
 2. Preserve plot unless the user requests plot-level revision.
 3. Keep original text separate unless a target file update is explicitly approved.
 4. If revision affects continuity, create patch candidates.
+5. Apply patches only through review and dry-run first; do not overwrite canon directly.
 
 Output: revised text and brief change note.
 

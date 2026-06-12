@@ -275,6 +275,83 @@ confidence: "medium"
 
 See `context_pack.md` for the full structure.
 
+## Extraction Progress
+
+```yaml
+project:
+  name: ""
+  source_manifest: "imports/chunk_manifest.yaml"
+  created_at: ""
+  updated_at: ""
+
+settings:
+  batch_size: 10
+  active_stage: "chunk_cards"
+  stages: ["chunk_cards", "chapter_cards", "volume_summaries", "story_bible_patches", "indexes"]
+
+chunks:
+  chapter_001_chunk_0001:
+    chapter_id: "chapter_001"
+    source_file: ""
+    output_file: ""
+    status: "pending | queued | processing | done | failed | skipped"
+    batch_id: ""
+    chunk_card: ""
+    error: ""
+    updated_at: ""
+
+chapters:
+  chapter_001:
+    status: "pending | partial | ready_for_chapter_card | done | failed"
+    chunk_ids: []
+    chapter_card: ""
+    updated_at: ""
+
+batches:
+  batch_0001:
+    stage: "chunk_cards"
+    status: "queued | processing | done | failed"
+    chunk_ids: []
+    created_at: ""
+    completed_at: ""
+    notes: ""
+```
+
+## Extraction Batch Metadata
+
+```yaml
+batch_id: "batch_0001"
+stage: "chunk_cards"
+status: "queued"
+chunk_ids:
+  - "chapter_001_chunk_0001"
+created_at: ""
+instructions: "Read only listed chunks; facts require source/status/confidence."
+outputs_expected:
+  - "extracted/chunk_cards/*.yaml"
+```
+
+## Navigation Index Entry
+
+Indexes are retrieval aids. They must point back to source files and must not replace canon or extracted cards.
+
+```yaml
+characters:
+  - id: ""
+    name: ""
+    aliases: []
+    type: "characters"
+    sources: []
+    chapters: []
+    chunks: []
+    last_seen: ""
+    status: ""
+    confidence: ""
+    notes: ""
+```
+
 ## Patch
 
 See `patch_update.md` for the post-write patch schema.
+
+Patch apply helpers may dry-run and apply limited safe fields, but complex bible updates remain review-only unless a human explicitly approves the target edit.

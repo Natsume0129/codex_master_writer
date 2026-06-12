@@ -69,6 +69,7 @@ def ensure_directories(project: Path) -> None:
         "raw_text/chapters",
         "chunks",
         "imports",
+        "imports/batches",
         "extracted/chunk_cards",
         "extracted/chapter_cards",
         "extracted/volume_summaries",
@@ -80,6 +81,7 @@ def ensure_directories(project: Path) -> None:
         "indexes",
         "pending_updates",
         "context_packs",
+        "backups",
         "drafts",
         "reviews",
     ]

@@ -55,7 +55,7 @@ def render_patch(branch: str, chapter: str, source_draft: str) -> str:
             "  continuity_issues: []",
             "potential_conflicts: []",
             "requires_user_confirmation: []",
-            'notes: "填写写后新增事实、状态变化、伏笔变化和潜在矛盾；不要直接覆盖资料库。"',
+            'notes: "Fill post-write facts, state changes, style shifts, and possible conflicts here. Do not directly overwrite bible files."',
             "",
         ]
     )
@@ -95,4 +95,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
