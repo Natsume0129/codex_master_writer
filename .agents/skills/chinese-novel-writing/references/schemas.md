@@ -2,6 +2,16 @@
 
 These schemas define the expected shape of project files. YAML examples are templates, not complete story data.
 
+## v0.3.1 Contract
+
+- The active skill path is `.agents/skills/chinese-novel-writing/`.
+- New project templates live under `templates/novel_project/`; this is intentional and replaces the older single-file `assets/templates/` idea.
+- New generated files should include `schema_version: "0.3.1"` when the format supports it.
+- `output_mode` is the canonical output field. `preferred_output_mode` is an older requirements name and is not the current implementation field.
+- Important facts use `source`, `status`, and `confidence`. Do not reintroduce `fact_status`.
+- Indexes are navigation aids, not source of truth.
+- `pending_updates/` is a review queue, not an automatic merge area.
+
 ## Fact Value
 
 Use this exact fact envelope for important settings. Do not use the old separate fact-status key.
@@ -23,9 +33,12 @@ Status rules:
 - `user_override`: explicitly supplied by the user; highest priority.
 - `deprecated`: superseded or intentionally retired; exclude from normal context packs.
 
+Some fields named `status` are lifecycle states rather than evidence states. For example, `foreshadowing.status` uses `open | reinforced | paid_off | abandoned | uncertain`, and extraction progress uses `pending | queued | processing | done | failed | skipped`. Do not treat those as fact evidence status without reading the surrounding schema.
+
 ## project_config.yaml
 
 ```yaml
+schema_version: "0.3.1"
 project_name: ""
 language: "zh-CN"
 primary_mode: "original"
@@ -96,9 +109,12 @@ relationships:
     knowledge_asymmetry: ""
     stage: ""
     source: []
+    status: "confirmed | inferred | uncertain | user_override | deprecated"
     confidence: "high | medium | low"
     branch: "canon | main | branch_name"
 ```
+
+For older projects where relationship entries do not yet include `status`, keep `source` and `confidence`, and treat relationship certainty conservatively. v0.3.1 validation may warn but should not fail an otherwise valid empty project for this field.
 
 ## Item, Location, Organization, Term
 
@@ -206,6 +222,7 @@ divergence_analysis:
 ## Branch Config
 
 ```yaml
+schema_version: "0.3.1"
 branch_name: "main"
 branch_type: "main | alternate"
 title: ""
@@ -251,6 +268,7 @@ facts:
 ## Chapter Function Card
 
 ```yaml
+schema_version: "0.3.1"
 chapter: ""
 branch: ""
 chapter_goal: ""
@@ -278,6 +296,7 @@ See `context_pack.md` for the full structure.
 ## Extraction Progress
 
 ```yaml
+schema_version: "0.3.1"
 project:
   name: ""
   source_manifest: "imports/chunk_manifest.yaml"
@@ -320,6 +339,7 @@ batches:
 ## Extraction Batch Metadata
 
 ```yaml
+schema_version: "0.3.1"
 batch_id: "batch_0001"
 stage: "chunk_cards"
 status: "queued"

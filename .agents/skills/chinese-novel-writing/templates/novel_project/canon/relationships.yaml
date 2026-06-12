@@ -6,7 +6,7 @@ relationships:
     private_status: ""
     knowledge_asymmetry: ""
     stage: ""
+    status: "uncertain"
     source: []
     confidence: "low"
     branch: "canon"
-

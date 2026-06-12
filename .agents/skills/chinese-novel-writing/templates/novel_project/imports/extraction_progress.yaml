@@ -1,3 +1,5 @@
+schema_version: "0.3.1"
+
 project:
   name: ""
   source_manifest: "imports/chunk_manifest.yaml"
@@ -35,4 +37,3 @@ batches:
   #   created_at: ""
   #   completed_at: ""
   #   notes: ""
-

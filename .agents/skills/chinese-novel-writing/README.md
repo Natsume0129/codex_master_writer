@@ -1,76 +1,60 @@
 # chinese-novel-writing
 
-`chinese-novel-writing` 是一个 Codex Agent Skill，用于中文小说项目化创作、导入、续写、资料库维护、剧情分支改写和一致性检查。
-
-它不是完整写作 App，也不是 Web UI、数据库服务、向量库或外部 LLM/API 客户端。v0.3 提供的是 Skill 指令、reference 工作流、空项目模板和标准库 Python 辅助脚本。
-
-## 公开仓库提醒
-
-- 不要把真实小说原文、长篇草稿、读者隐私或未公开设定提交到公开仓库。
-- 如果要同步真实项目，请使用 private repo。
-- `raw_text/`、`chunks/`、`drafts/`、`reviews/`、`context_packs/` 默认不建议公开。
-- `.gitignore` 已覆盖常见小说项目目录，但提交前仍应检查 `git status`。
-
-## v0.3 标准流程
-
-1. 创建小说项目。
-2. 导入 txt 并切章节。
-3. 切 chunk，可用 `--clean` 清理旧 chunk。
-4. 初始化 `imports/extraction_progress.yaml`。
-5. 创建小批量抽取 batch。
-6. 让 Codex 只读取 batch 内 chunk，生成 chunk cards。
-7. 标记 batch/chunk 完成或失败。
-8. 生成 chapter cards、volume summaries、story bible patch。
-9. 构建 indexes。indexes 只是导航，不是事实来源。
-10. 写章节功能卡。
-11. 生成 context pack。续写、改写、审稿前必须先有 context pack。
-12. 续写正文。
-13. 生成写后 patch。
-14. 先 dry-run apply patch，再在确认后应用有限安全更新。
-15. validate 项目。
-
-## 创建项目
-
-```bash
-python .agents/skills/chinese-novel-writing/scripts/init_project.py --name my-novel --output ./projects/my-novel
-```
-
-## 导入并切章节
-
-```bash
-python .agents/skills/chinese-novel-writing/scripts/split_chapters.py --input ./novel.txt --output ./projects/my-novel/raw_text/chapters
-```
-
-## 切 Chunk
-
-```bash
-python .agents/skills/chinese-novel-writing/scripts/split_chunks.py --project ./projects/my-novel --chunk-size 6000 --overlap 500 --force --clean
-```
-
-`--clean` 只会删除输出目录里的旧 `*_chunk_*.txt`，并且必须配合 `--force` 使用。它不会删除原文或已抽取卡片。
-
-## 初始化抽取进度
-
-```bash
-python .agents/skills/chinese-novel-writing/scripts/init_extraction_progress.py --project ./projects/my-novel --force
-```
-
-该命令根据 `imports/chunk_manifest.yaml` 创建 `imports/extraction_progress.yaml`，用于长篇导入的断点续跑。
-
-## 创建抽取 Batch
-
-```bash
-python .agents/skills/chinese-novel-writing/scripts/create_extraction_batch.py --project ./projects/my-novel --stage chunk_cards --batch-size 5 --force
-```
-
-batch 文件会写入：
+`chinese-novel-writing` 是一个中文小说项目工作流 skill，用于从零创作、导入续写、资料库维护、context pack 构建、剧情分支改写和一致性检查。v0.3.1 保留当前实际路径：
 
 ```text
-imports/batches/batch_0001_chunk_cards.md
-imports/batches/batch_0001_chunk_cards.yaml
+.agents/skills/chinese-novel-writing/
 ```
 
-### Batch 导入 Prompt
+`DEVELOPMENT_REQUIREMENTS.md` 是原始需求基准；当前实现不重建 `chinese-novel-studio`，也不移动到 `assets/templates/`。项目模板源是：
+
+```text
+.agents/skills/chinese-novel-writing/templates/novel_project/
+```
+
+## 它不是什么
+
+- 不是完整写作 App，也不提供 Web UI。
+- 不接数据库、向量库、外部 API 或外部 LLM 服务。
+- 不内置成人内容安全检查器。
+- 不承诺“完美处理 200 万字小说”；它提供长文本分层导入和任务级 context pack 架构。
+- 不会在写作后直接覆盖 `canon/`、`timeline.yaml`、`foreshadowing.yaml` 等核心资料库。
+
+## v0.3.1 推荐工作流
+
+1. `init` 创建项目。
+2. `split-import` 切章节、切 chunk、初始化 progress、创建第一批 batch。
+3. 让 Codex 只读取 batch 内 chunk，生成 chunk cards。
+4. `mark-done` 标记 batch 或 chunk 状态。
+5. `build-indexes` 构建导航索引。indexes 不是事实来源。
+6. `create-function-card` 写章节功能卡。
+7. `build-context-pack` 生成写作/续写/改写/审稿前的任务输入包。
+8. 写正文或大纲后 `create-patch` 生成 pending update。
+9. `apply-patch` 默认 dry-run；确认后才可 `--confirm`。
+10. `validate` 自检项目结构。
+
+## 快速开始
+
+```bash
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py init --project-root ./tmp/demo_novel --name demo --force
+```
+
+## 导入已有小说
+
+```bash
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py split-import --project-root ./tmp/demo_novel --source .agents/skills/chinese-novel-writing/samples/minimal_chinese_story.txt --chunk-size 1000 --overlap 100 --batch-size 2 --force --clean
+```
+
+`split-import` 会按顺序执行：
+
+1. `split_chapters.py`
+2. `split_chunks.py`
+3. `init_extraction_progress.py`
+4. `create_extraction_batch.py`
+
+`--clean` 必须搭配 `--force`。它只清理旧 `*_chunk_*.txt`，不会删除原文或已抽取卡片。
+
+Batch 导入时给 Codex 的指令：
 
 ```text
 请使用 chinese-novel-writing skill，处理 imports/batches/<batch_id>_chunk_cards.md 中列出的 chunk。
@@ -78,125 +62,92 @@ imports/batches/batch_0001_chunk_cards.yaml
 为每个 chunk 生成 extracted/chunk_cards/<chunk_id>.yaml。
 每条重要事实必须包含 source、status、confidence。
 不要把推测写成 confirmed；不要直接修改 canon 或 main 分支资料库。
-完成后用 scripts/mark_extraction_done.py 更新 extraction_progress.yaml。
+完成后用 novel_project.py mark-done 更新 extraction_progress.yaml。
 ```
 
-## 标记抽取完成
+## 续写前准备
 
 ```bash
-python .agents/skills/chinese-novel-writing/scripts/mark_extraction_done.py --project ./projects/my-novel --batch-id batch_0001 --status done
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-function-card --project-root ./tmp/demo_novel --branch main --chapter 1 --goal "测试章节功能卡" --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py build-context-pack --project-root ./tmp/demo_novel --branch main --task continue_story --chapter 1 --include-recent 3 --force
 ```
 
-失败时：
+写作、续写、剧情改写、审稿前都必须先构建 context pack。context pack 只包含当前任务相关内容，不读取 `raw_text/full_text.txt`，也不默认塞入全量 canon。
+
+## 剧情改写分支
 
 ```bash
-python .agents/skills/chinese-novel-writing/scripts/mark_extraction_done.py --project ./projects/my-novel --batch-id batch_0001 --status failed --error "reason"
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py new-branch --project-root ./tmp/demo_novel --name what_if_villain_ally --title "反派成为盟友线" --divergence "主角一开始和反派成为朋友" --inherit skeleton --force
 ```
 
-## 构建 Indexes
+`rewrite_plot`、`what-if`、`假如`、`保留设定但改写` 等请求必须进入 `branches/<branch>/`。branch 的人物状态、timeline、foreshadowing 不写回 `canon/` 或 `branches/main/`，除非用户明确确认并通过 patch。
+
+## 写后 Patch
 
 ```bash
-python .agents/skills/chinese-novel-writing/scripts/build_indexes.py --project ./projects/my-novel --source all --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-patch --project-root ./tmp/demo_novel --branch main --chapter 1 --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py apply-patch --project-root ./tmp/demo_novel --patch ./tmp/demo_novel/pending_updates/chapter_001_patch.yaml
 ```
 
-Indexes 用于帮助 context pack 检索人物、地点、物品、组织、事件、伏笔、术语、章节和 chunk。它们不是 source of truth；事实仍以 canon、extracted cards 和用户确认内容为准。
-
-## 写章节功能卡
+`apply-patch` 默认 dry-run，不写文件。确认写入时使用：
 
 ```bash
-python .agents/skills/chinese-novel-writing/scripts/create_chapter_function_card.py --project ./projects/my-novel --branch main --chapter 12 --goal "主角进入剑冢，发现父亲线索" --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py apply-patch --project-root ./tmp/demo_novel --patch ./tmp/demo_novel/pending_updates/chapter_001_patch.yaml --confirm
 ```
 
-输出位置：
-
-```text
-branches/main/chapter_function_cards/chapter_012_function_card.yaml
-```
-
-## 生成 Context Pack
-
-```bash
-python .agents/skills/chinese-novel-writing/scripts/build_context_pack.py --project ./projects/my-novel --branch main --task continue_story --chapter 12 --characters 林照夜 沈青辞 --locations 剑冢 --items 破剑 --foreshadowing-ids foreshadowing_007 --include-recent 3 --previous-ending-chars 1500 --output ./projects/my-novel/context_packs/chapter_012_context.md --force
-```
-
-v0.3 会自动读取当前分支的章节功能卡，并把 `chapter_goal` 写入 context pack。实体检索会先看 index，再从 canon 抽完整条目块，最后才退回短行匹配。没有找到的内容会进入 `missing_sections`，不会默认塞入整份资料库。
-
-## 创建剧情改写分支
-
-```bash
-python .agents/skills/chinese-novel-writing/scripts/create_branch.py --project ./projects/my-novel --branch villain-ally --title "反派成为盟友线" --divergence "主角和原反派在开篇成为朋友" --inherit skeleton
-```
-
-分支改写必须隔离在 `branches/<branch>/` 下，不要污染 `canon/` 或 `branches/main/`。
-
-## 生成写后 Patch
-
-```bash
-python .agents/skills/chinese-novel-writing/scripts/create_patch.py --project ./projects/my-novel --branch main --chapter 12 --force
-```
-
-patch 写入 `pending_updates/`。不要在续写后直接覆盖人物、时间线、世界观、物品、伏笔等核心资料。
-
-## Dry-run / Apply Patch
-
-默认只 dry-run：
-
-```bash
-python .agents/skills/chinese-novel-writing/scripts/apply_patch.py --project ./projects/my-novel --patch ./projects/my-novel/pending_updates/chapter_012_patch.yaml
-```
-
-确认后应用有限安全字段：
-
-```bash
-python .agents/skills/chinese-novel-writing/scripts/apply_patch.py --project ./projects/my-novel --patch ./projects/my-novel/pending_updates/chapter_012_patch.yaml --confirm
-```
-
-如果 patch 的 `requires_user_confirmation` 非空，还必须在用户明确同意后加 `--confirm-major`。v0.3 只自动追加 timeline、foreshadowing_added、open_questions_added、continuity_issues；人物、关系、世界观、地点、组织、物品、术语更新需要人工审阅。
+如果 `requires_user_confirmation` 非空，必须在用户明确同意后加 `--confirm-major`。人物、关系、世界观、地点、组织、物品、术语等复杂更新在 v0.3.1 仍是 review-only。
 
 ## Validate
 
 ```bash
-python .agents/skills/chinese-novel-writing/scripts/validate_project.py --project ./projects/my-novel
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py validate --project-root ./tmp/demo_novel
 ```
 
-也可以使用 wrapper：
+warnings 不代表失败。`schema_version` 缺失会 warning，不会让旧项目直接失败。
+
+## 手动验证 Happy Path
 
 ```bash
-python .agents/skills/chinese-novel-writing/scripts/novel_project.py validate --project ./projects/my-novel
-```
-
-## 最小手动验证
-
-```bash
-python .agents/skills/chinese-novel-writing/scripts/init_project.py --name demo --output ./tmp/demo_novel --force
-python .agents/skills/chinese-novel-writing/scripts/split_chapters.py --input .agents/skills/chinese-novel-writing/samples/minimal_chinese_story.txt --output ./tmp/demo_novel/raw_text/chapters --force
-python .agents/skills/chinese-novel-writing/scripts/split_chunks.py --project ./tmp/demo_novel --chunk-size 1000 --overlap 100 --force --clean
-python .agents/skills/chinese-novel-writing/scripts/init_extraction_progress.py --project ./tmp/demo_novel --force
-python .agents/skills/chinese-novel-writing/scripts/create_extraction_batch.py --project ./tmp/demo_novel --stage chunk_cards --batch-size 2 --force
-python .agents/skills/chinese-novel-writing/scripts/create_chapter_function_card.py --project ./tmp/demo_novel --branch main --chapter 1 --goal "测试章节功能卡" --force
-python .agents/skills/chinese-novel-writing/scripts/build_context_pack.py --project ./tmp/demo_novel --branch main --task continue_story --chapter 1 --include-recent 3 --force
-python .agents/skills/chinese-novel-writing/scripts/create_patch.py --project ./tmp/demo_novel --branch main --chapter 1 --force
-python .agents/skills/chinese-novel-writing/scripts/apply_patch.py --project ./tmp/demo_novel --patch ./tmp/demo_novel/pending_updates/chapter_001_patch.yaml
-python .agents/skills/chinese-novel-writing/scripts/validate_project.py --project ./tmp/demo_novel
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py --help
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py init --project-root ./tmp/demo_novel --name demo --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py split-import --project-root ./tmp/demo_novel --source .agents/skills/chinese-novel-writing/samples/minimal_chinese_story.txt --chunk-size 1000 --overlap 100 --batch-size 2 --force --clean
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-function-card --project-root ./tmp/demo_novel --branch main --chapter 1 --goal "测试章节功能卡" --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py build-context-pack --project-root ./tmp/demo_novel --branch main --task continue_story --chapter 1 --include-recent 3 --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-patch --project-root ./tmp/demo_novel --branch main --chapter 1 --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py apply-patch --project-root ./tmp/demo_novel --patch ./tmp/demo_novel/pending_updates/chapter_001_patch.yaml
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py validate --project-root ./tmp/demo_novel
 ```
 
 `samples/minimal_chinese_story.txt` 是极短 synthetic sample，只用于验证脚本能跑，不用于评估写作质量。
 
-## v0.3 支持
+## 高级脚本
 
-- 可断点续跑的 extraction progress。
-- batch 文件生成和状态标记。
-- chunk/chapter/entity indexes 构建。
-- context pack 自动载入当前分支章节功能卡。
-- context pack 的索引优先实体检索和 `retrieval_notes`。
-- guarded patch apply：dry-run 默认、备份、changelog、有限自动合并。
-- 更完整的 validate。
+底层脚本仍可直接调用，用于细粒度控制：
 
-## 仍不支持
+- `init_project.py`
+- `split_chapters.py`
+- `split_chunks.py`
+- `init_extraction_progress.py`
+- `create_extraction_batch.py`
+- `mark_extraction_done.py`
+- `build_indexes.py`
+- `create_branch.py`
+- `create_chapter_function_card.py`
+- `build_context_pack.py`
+- `create_patch.py`
+- `apply_patch.py`
+- `validate_project.py`
 
-- 自动语义检索、向量库或数据库服务。
-- 外部 API、联网读取或远程同步。
-- 自动人物抽取、文风建模和剧情推理脚本。
-- 复杂资料库 patch 的无人工合并。
-- 自动 rollback。
-- 内置成人内容安全检查器。
+## Schema 取舍
+
+- v0.3.1 使用 `schema_version: "0.3.1"` 标记新模板和新生成文件。
+- `output_mode` 是 canonical 字段；旧需求里的 `preferred_output_mode` 不是当前实现主字段。
+- 重要事实继续使用 `source` / `status` / `confidence`。
+- `foreshadowing.status` 这类字段表示生命周期状态，不等同于事实证据状态。
+- `pending_updates/` 是 review queue，不是自动合并区。
+
+## 公开仓库安全提醒
+
+- 不要把真实小说原文、长篇草稿、读者隐私或未公开设定提交到公开仓库。
+- `raw_text/`、`chunks/`、`drafts/`、`reviews/`、`context_packs/` 默认不建议公开。
+- 提交前检查 `git status` 和 `.gitignore`。

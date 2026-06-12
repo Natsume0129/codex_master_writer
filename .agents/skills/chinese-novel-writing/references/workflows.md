@@ -8,7 +8,7 @@ Input: idea, genre, protagonist, setting, or a request to create a novel project
 
 Steps:
 
-1. Initialize the project with `scripts/init_project.py`.
+1. Initialize the project with `scripts/novel_project.py init`.
 2. Fill or propose `project_config.yaml`, `user_preferences.md`, and high-level project overview fields.
 3. Build initial canon placeholders: protagonist candidates, world assumptions, terms, and hard constraints.
 4. Create main outline, first volume outline, early chapter plan, and first chapter function card.
@@ -23,14 +23,13 @@ Input: existing text file, pasted text, or a request to import previous chapters
 Steps:
 
 1. Save raw source text without destructive cleanup.
-2. Run `scripts/split_chapters.py` when a text file is available.
-3. Run `scripts/split_chunks.py --force --clean` to split long chapters into overlapping chunks.
-4. Run `scripts/init_extraction_progress.py` to create the resumable checkpoint file.
-5. Run `scripts/create_extraction_batch.py` to create a small batch prompt and metadata file.
+2. Run `scripts/novel_project.py split-import` when a text file is available; it chains chapter splitting, chunk splitting, progress initialization, and first batch creation.
+3. Process only the chunks listed in the generated batch file. Do not read `raw_text/full_text.txt`.
+4. Run `scripts/novel_project.py mark-done` after chunk cards are created, or mark failures with an error note.
+5. Run `scripts/novel_project.py create-batch` for the next batch when needed.
 6. Build chunk cards and chapter cards in batches using `references/extraction_prompts.md`. Do not read the whole source into context.
-7. Run `scripts/mark_extraction_done.py` after chunk cards are created, or mark failures with an error note.
-8. Create chapter summaries, volume summaries, story bible drafts, plot nodes, indexes, and import report.
-9. Run `scripts/build_indexes.py` after extracted cards or canon files change.
+7. Create chapter summaries, volume summaries, story bible drafts, plot nodes, indexes, and import report.
+8. Run `scripts/novel_project.py build-indexes` after extracted cards or canon files change.
 10. Mark extracted facts as `confirmed` only when directly supported by source text. Use `inferred` or `uncertain` for model interpretation.
 
 Output: import report, missing sections, and suggested next extraction batch.
@@ -42,12 +41,12 @@ Input: "continue", "write next chapter", or a target chapter request.
 Steps:
 
 1. Confirm active branch from `project_config.yaml` or user request.
-2. If chapter goal is missing, create a chapter function card before writing with `scripts/create_chapter_function_card.py`.
-3. Build context pack with `scripts/build_context_pack.py`; it automatically loads the active branch's chapter function card when present.
+2. If chapter goal is missing, create a chapter function card before writing with `scripts/novel_project.py create-function-card`.
+3. Build context pack with `scripts/novel_project.py build-context-pack`; it automatically loads the active branch's chapter function card when present.
 4. Draft according to style guide, current outline, recent summaries, and constraints.
 5. Run quality gate.
-6. Generate post-write patch with `scripts/create_patch.py` and fill candidate updates.
-7. Dry-run `scripts/apply_patch.py` if the user wants to apply safe post-write updates.
+6. Generate post-write patch with `scripts/novel_project.py create-patch` and fill candidate updates.
+7. Dry-run `scripts/novel_project.py apply-patch` if the user wants to apply safe post-write updates.
 
 Output: draft according to output mode, short quality summary, and patch summary.
 
@@ -60,7 +59,7 @@ Steps:
 1. Read canon and original plot map summaries only as needed.
 2. Identify divergence point, impact radius, preserved facts, and allowed changes.
 3. Map original plot nodes as preserved, invalidated, inverted, or needing replacement.
-4. Create a new branch with `scripts/create_branch.py`, defaulting to `--inherit skeleton`.
+4. Create a new branch with `scripts/novel_project.py new-branch`, defaulting to `--inherit skeleton`.
 5. Produce 2-3 route options when the change is high impact.
 6. Recalculate relationships, causal chain, antagonist plan, timeline, foreshadowing, and outline within the new branch.
 7. Run branch pollution and plausibility checks.

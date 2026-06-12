@@ -10,7 +10,7 @@ Use these prompts when importing a long Chinese novel in batches. Do not process
 为每个 chunk 生成 extracted/chunk_cards/<chunk_id>.yaml。
 每条重要事实必须包含 source、status、confidence。
 不要把推测写成 confirmed；不要直接修改 canon 或 main 分支资料库。
-完成后用 scripts/mark_extraction_done.py 更新 extraction_progress.yaml。
+完成后用 scripts/novel_project.py mark-done 更新 extraction_progress.yaml。
 ```
 
 ## Status Rules

@@ -36,7 +36,13 @@ Each alternate branch should have:
 - `drafts/`
 - `reviews/`
 
-Use `--inherit skeleton` by default. It creates empty branch-local files and does not copy main's concrete timeline, outline, or foreshadowing. Use `--inherit current-state --base-chapter N` only when the divergence starts after an existing chapter and copied state must be pruned.
+Use the unified CLI:
+
+```bash
+python scripts/novel_project.py new-branch --project-root ./projects/my-novel --name what_if_villain_ally --title "反派成为盟友线" --divergence "主角一开始和反派成为朋友" --inherit skeleton
+```
+
+Use `--inherit skeleton` by default. It creates empty branch-local files and does not copy main's concrete timeline, outline, or foreshadowing. Use `--inherit current-state --base-chapter N` only when the divergence starts after an existing chapter and copied state must be pruned. v0.3.1 treats missing `--base-chapter` with `current-state` as an error.
 
 ## Divergence Point
 

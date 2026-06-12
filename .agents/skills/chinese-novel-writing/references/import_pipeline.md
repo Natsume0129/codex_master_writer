@@ -35,7 +35,7 @@ The split is conservative. It preserves original text and reports suspicious emp
 Run chunk splitting after chapter splitting:
 
 ```bash
-python scripts/split_chunks.py --project ./projects/my-novel --chunk-size 6000 --overlap 500 --force --clean
+python scripts/novel_project.py split-import --project-root ./projects/my-novel --source ./novel.txt --chunk-size 6000 --overlap 500 --batch-size 5 --force --clean
 ```
 
 `split_chunks.py` writes `imports/chunk_manifest.yaml`. Each chunk records `chunk_id`, `chapter_id`, `source_file`, `output_file`, `start_char`, `end_char`, `char_count`, `overlap_prev`, and `overlap_next`.
@@ -47,7 +47,7 @@ Use `--clean` only with `--force`. It removes old generated `*_chunk_*.txt` file
 Initialize progress after chunking:
 
 ```bash
-python scripts/init_extraction_progress.py --project ./projects/my-novel --force
+python scripts/novel_project.py init-progress --project-root ./projects/my-novel --force
 ```
 
 This creates `imports/extraction_progress.yaml` with `project`, `settings`, `chunks`, `chapters`, and `batches` sections. The progress file is the checkpoint for resuming a long import. Chunk states are `pending`, `queued`, `processing`, `done`, `failed`, and `skipped`.
@@ -55,13 +55,13 @@ This creates `imports/extraction_progress.yaml` with `project`, `settings`, `chu
 Create a small batch without reading chunk text:
 
 ```bash
-python scripts/create_extraction_batch.py --project ./projects/my-novel --stage chunk_cards --batch-size 5 --force
+python scripts/novel_project.py create-batch --project-root ./projects/my-novel --stage chunk_cards --batch-size 5 --force
 ```
 
 The batch files are written under `imports/batches/`. Codex should read only the chunk files listed in that batch, generate `extracted/chunk_cards/<chunk_id>.yaml`, and then update progress:
 
 ```bash
-python scripts/mark_extraction_done.py --project ./projects/my-novel --batch-id batch_0001 --status done
+python scripts/novel_project.py mark-done --project-root ./projects/my-novel --batch-id batch_0001 --status done
 ```
 
 Use `--retry-failed` with `create_extraction_batch.py` only when intentionally retrying failed chunks.
@@ -92,7 +92,7 @@ The import process should leave:
 After chunk cards and chapter cards exist, rebuild lightweight navigation indexes:
 
 ```bash
-python scripts/build_indexes.py --project ./projects/my-novel --source all --force
+python scripts/novel_project.py build-indexes --project-root ./projects/my-novel --source all --force
 ```
 
 Indexes help context retrieval, but they are not source of truth. Canon files, extracted cards, and explicit user statements remain the source-backed facts.

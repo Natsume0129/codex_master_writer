@@ -401,6 +401,7 @@ def render_yaml(args: argparse.Namespace, context: dict[str, str | list[str]], m
     retrieval_notes = context.get("retrieval_notes", [])
     lines = [
         "context_pack:",
+        '  schema_version: "0.3.1"',
         "  generated_by: \"chinese-novel-writing/scripts/build_context_pack.py\"",
         f"  generated_at: {yaml_quote(datetime.now(timezone.utc).isoformat(timespec='seconds'))}",
         "  task:",
@@ -474,6 +475,8 @@ def render_markdown(args: argparse.Namespace, context: dict[str, str | list[str]
     return f"""# Context Pack
 
 Generated at: {datetime.now(timezone.utc).isoformat(timespec="seconds")}
+
+Schema version: 0.3.1
 
 ## Task
 

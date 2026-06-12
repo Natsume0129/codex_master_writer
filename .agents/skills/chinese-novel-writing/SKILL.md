@@ -1,6 +1,6 @@
 ---
 name: chinese-novel-writing
-description: Use this skill for Chinese novel writing projects, including creating a novel from scratch, importing and continuing an existing Chinese novel, building story bibles, creating context packs, and rewriting an existing novel through isolated alternate-plot branches.
+description: Use this skill for Chinese novel writing projects and long-form fiction workflows: create project, write novel, import story, continue story, build outline, style profiling, maintain story bible, build context packs, review story, rewrite plot, alternate plot, and branch-isolated Chinese novel restructuring.
 ---
 
 # Chinese Novel Writing
@@ -64,8 +64,9 @@ Load only the reference needed for the current task:
 
 ## Script Usage
 
-Use scripts for deterministic file work:
+Use `scripts/novel_project.py` as the preferred v0.3.1 unified CLI for deterministic file work. Use lower-level scripts only when fine-grained control is needed.
 
+- `scripts/novel_project.py` exposes `init`, `split-import`, `init-progress`, `create-batch`, `mark-done`, `build-indexes`, `new-branch`, `create-function-card`, `build-context-pack`, `create-patch`, `apply-patch`, and `validate`.
 - `scripts/init_project.py` creates a project from templates.
 - `scripts/split_chapters.py` splits imported text and writes an import manifest.
 - `scripts/split_chunks.py` splits chapter files into overlapping chunks and writes a chunk manifest.

@@ -2,12 +2,12 @@
 
 A context pack is the only approved input bundle for continuation, drafting, rewriting, and review. It contains task-relevant context, not the whole project.
 
-## v0.3 Builder Inputs
+## v0.3.1 Builder Inputs
 
 `build_context_pack.py` accepts selectors so Codex can include relevant entities without dumping whole bible files:
 
 ```bash
-python scripts/build_context_pack.py --project ./projects/my-novel --branch main --task continue_story --chapter 12 --characters 林照夜 沈青辞 --locations 剑冢 --items 破剑 --foreshadowing-ids foreshadowing_007 --include-recent 3 --previous-ending-chars 1500 --format markdown --force
+python scripts/novel_project.py build-context-pack --project-root ./projects/my-novel --branch main --task continue_story --chapter 12 --characters 林照夜 沈青辞 --locations 剑冢 --items 破剑 --foreshadowing-ids foreshadowing_007 --include-recent 3 --previous-ending-chars 1500 --format markdown --force
 ```
 
 If selectors are absent or indexes do not contain matching entries, the builder records `missing_sections` instead of inserting large unrelated snippets.
@@ -29,10 +29,13 @@ Entity retrieval is conservative:
 
 Indexes are navigation aids, not durable truth. If index and canon disagree, prefer source-backed canon entries and mark the conflict for review.
 
+v0.3.1 context packs include a schema marker. Markdown packs use `Schema version: 0.3.1`; YAML packs use `context_pack.schema_version`.
+
 ## Default Structure
 
 ```yaml
 context_pack:
+  schema_version: "0.3.1"
   task:
     type: continue_story
     user_request: ""

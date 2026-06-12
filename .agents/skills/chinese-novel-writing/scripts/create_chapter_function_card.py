@@ -26,6 +26,7 @@ def chapter_label(chapter: str) -> str:
 def render_card(branch: str, chapter: str, goal: str, source: str, status: str, confidence: str) -> str:
     return "\n".join(
         [
+            'schema_version: "0.3.1"',
             f"chapter: {yaml_quote(chapter_label(chapter))}",
             f"branch: {yaml_quote(branch)}",
             f"chapter_goal: {yaml_quote(goal)}",
@@ -92,4 +93,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

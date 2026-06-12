@@ -70,6 +70,7 @@ def main(argv: list[str] | None = None) -> int:
         for chapter_id, chunk_ids in sorted(chapter_chunks.items())
     }
     data: dict[str, object] = {
+        "schema_version": "0.3.1",
         "project": {
             "name": project.name,
             "source_manifest": safe_relative(manifest, project),
@@ -94,4 +95,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

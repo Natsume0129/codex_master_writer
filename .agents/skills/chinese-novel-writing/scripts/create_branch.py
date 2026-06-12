@@ -58,6 +58,7 @@ def render_branch_config(branch_name: str, title: str, divergence: str, inherit:
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
     return "\n".join(
         [
+            'schema_version: "0.3.1"',
             f"branch_name: {yaml_quote(branch_name)}",
             'branch_type: "alternate"',
             f"title: {yaml_quote(title or branch_name)}",
@@ -77,6 +78,7 @@ def render_divergence(branch_name: str, divergence: str, inherit: str, base_chap
     requires_pruning = "true" if inherit == "current-state" else "false"
     return "\n".join(
         [
+            'schema_version: "0.3.1"',
             f"branch_name: {yaml_quote(branch_name)}",
             'base_branch: "main"',
             f"base_chapter: {yaml_quote(base_chapter)}",
@@ -184,4 +186,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

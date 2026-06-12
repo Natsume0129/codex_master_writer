@@ -11,6 +11,8 @@ from pathlib import Path
 from _novel_utils import parse_mapping_list, parse_progress
 
 
+CURRENT_SCHEMA_VERSION = "0.3.1"
+
 REQUIRED_DIRS = [
     "raw_text",
     "raw_text/chapters",
@@ -140,6 +142,40 @@ def visible_fields(path: Path, fields: list[str]) -> list[str]:
     return missing
 
 
+def has_schema_version(path: Path) -> bool:
+    if not path.exists() or not path.is_file():
+        return True
+    text = read_text(path)
+    return bool(re.search(r"^\s*schema_version\s*:", text, flags=re.MULTILINE)) or (
+        "Schema version:" in text
+    )
+
+
+def check_schema_versions(project: Path, warnings: list[str]) -> None:
+    files: list[Path] = [
+        project / "project_config.yaml",
+        project / "imports" / "extraction_progress.yaml",
+    ]
+    branches_dir = project / "branches"
+    if branches_dir.exists():
+        for branch_dir in sorted(item for item in branches_dir.iterdir() if item.is_dir()):
+            files.append(branch_dir / "branch_config.yaml")
+            divergence = branch_dir / "divergence_point.yaml"
+            if divergence.exists():
+                files.append(divergence)
+            files.extend(sorted((branch_dir / "chapter_function_cards").glob("*.yaml")))
+    files.extend(sorted((project / "pending_updates").glob("*.yaml")))
+    files.extend(sorted((project / "imports" / "batches").glob("*.yaml")))
+    files.extend(sorted((project / "context_packs").glob("*.md")))
+    files.extend(sorted((project / "context_packs").glob("*.yaml")))
+
+    for path in files:
+        if path.exists() and not has_schema_version(path):
+            warnings.append(
+                f"{path.relative_to(project)} has no schema_version; v{CURRENT_SCHEMA_VERSION} projects should include it"
+            )
+
+
 def check_fact_fields(project: Path, errors: list[str], warnings: list[str]) -> None:
     for yaml_file in project.rglob("*.yaml"):
         text = read_text(yaml_file)
@@ -177,6 +213,14 @@ def check_schema_hints(project: Path, warnings: list[str]) -> None:
             "confidence",
         ],
         "canon/items.yaml": ["id", "name", "owner", "state", "source", "status", "confidence"],
+        "canon/relationships.yaml": [
+            "from",
+            "to",
+            "relation_type",
+            "status",
+            "source",
+            "confidence",
+        ],
         "branches/main/timeline.yaml": [
             "id",
             "story_time",
@@ -365,6 +409,7 @@ def validate_project(project: Path) -> tuple[list[str], list[str], list[str]]:
             errors.append(f"yaml issue in {yaml_file.relative_to(project)}: {error}")
 
     check_fact_fields(project, errors, warnings)
+    check_schema_versions(project, warnings)
     check_schema_hints(project, warnings)
     check_branches(project, errors)
     check_pending_patches(project, errors, warnings)
@@ -395,7 +440,7 @@ def print_section(title: str, items: list[str]) -> None:
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Validate a novel project structure and v0.3 schemas.")
+    parser = argparse.ArgumentParser(description="Validate a novel project structure and v0.3.1 schemas.")
     parser.add_argument("--project", required=True, type=Path, help="Novel project root.")
     return parser.parse_args(argv)
 

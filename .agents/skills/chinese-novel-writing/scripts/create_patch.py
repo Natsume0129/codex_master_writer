@@ -33,6 +33,7 @@ def render_patch(branch: str, chapter: str, source_draft: str) -> str:
     patch_id = f"{branch}_chapter_{chapter}_{now}".replace(":", "").replace("+", "_")
     return "\n".join(
         [
+            'schema_version: "0.3.1"',
             f"patch_id: {yaml_quote(patch_id)}",
             f"branch: {yaml_quote(branch)}",
             f"chapter: {yaml_quote(str(chapter))}",

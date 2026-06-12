@@ -83,6 +83,7 @@ def parse_mapping_list(path: Path, key: str) -> list[dict[str, object]]:
 
 def parse_progress(path: Path) -> dict[str, object]:
     data: dict[str, object] = {
+        "schema_version": "",
         "project": {},
         "settings": {},
         "chunks": {},
@@ -98,6 +99,10 @@ def parse_progress(path: Path) -> dict[str, object]:
             continue
         indent = len(raw) - len(raw.lstrip(" "))
         stripped = raw.strip()
+        if indent == 0 and ":" in stripped and not stripped.endswith(":"):
+            k, v = stripped.split(":", 1)
+            data[k.strip()] = parse_scalar(v)
+            continue
         if indent == 0 and stripped.endswith(":"):
             section = stripped[:-1]
             entry = ""
@@ -125,6 +130,9 @@ def parse_progress(path: Path) -> dict[str, object]:
 
 def write_progress(path: Path, data: dict[str, object]) -> None:
     lines: list[str] = []
+    if data.get("schema_version"):
+        lines.append(f"schema_version: {format_scalar(data.get('schema_version'))}")
+        lines.append("")
     for section in ("project", "settings"):
         lines.append(f"{section}:")
         section_data = data.get(section, {})
@@ -165,4 +173,3 @@ def safe_relative(path: Path, root: Path) -> str:
         return str(path.resolve().relative_to(root.resolve()))
     except ValueError:
         return str(path)
-
