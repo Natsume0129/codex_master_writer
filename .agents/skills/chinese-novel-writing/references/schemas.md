@@ -2,17 +2,20 @@
 
 These schemas define the expected shape of project files. YAML examples are templates, not complete story data.
 
-## v0.4 Contract
+## v0.5 Contract
 
 - The active skill path is `.agents/skills/chinese-novel-writing/`.
 - New project templates live under `templates/novel_project/`; this is intentional and replaces the older single-file `assets/templates/` idea.
-- New generated files should include `schema_version: "0.4"` when the format supports it.
+- Existing structural project files from v0.4 remain valid.
+- New v0.5 writing-control artifacts use `schema_version: "0.5"`: chapter function cards, draft prompts, quality review prompts, and patch review reports.
+- New v0.4 import and patch skeleton formats still use `schema_version: "0.4"` unless that specific format is migrated.
 - `output_mode` is the canonical output field. `preferred_output_mode` is an older requirements name and is not the current implementation field.
 - Important facts use `source`, `status`, and `confidence`. Do not reintroduce `fact_status`.
 - Indexes are navigation aids, not source of truth.
 - `pending_updates/` is a review queue, not an automatic merge area.
 - Import closure is staged through chapter-card batches, volume-summary batches, and story-bible patch batches. Scripts generate prompts and patch skeletons; they do not perform AI analysis.
 - Context packs may use `--auto-select`, but manual selectors have priority and empty auto-selection remains valid.
+- Draft prompts and quality review prompts are instructions for Codex/model; scripts do not write prose or perform AI review.
 
 ## Fact Value
 
@@ -271,25 +274,49 @@ facts:
 ## Chapter Function Card
 
 ```yaml
-schema_version: "0.4"
-chapter: ""
-branch: ""
+schema_version: "0.5"
+chapter: "chapter_001"
+branch: "main"
 chapter_goal: ""
+chapter_function:
+  type: "setup | escalation | reveal | reversal | payoff | transition | climax | aftermath | unknown"
+  purpose: ""
+  reader_promise: ""
 main_conflict: ""
-scene_beats: []
+scene_beats:
+  - beat_id: "beat_001"
+    purpose: ""
+    location: ""
+    characters: []
+    conflict: ""
+    outcome: ""
+    required_facts: []
+    forbidden_changes: []
+emotional_arc:
+  start: ""
+  turn: ""
+  end: ""
 new_information: []
 character_change: []
 relationship_change: []
 worldbuilding_to_reveal: []
 foreshadowing_to_add: []
 foreshadowing_to_payoff: []
-ending_hook: ""
+continuity_constraints: []
 style_target: ""
+ending_hook: ""
 hard_constraints: []
-forbidden: []
-source: []
+forbidden:
+  - "不得自动决定重大剧情变化。"
+  - "不得覆盖用户原文。"
+requires_user_confirmation:
+  - change: ""
+    reason: ""
+source: ["user_input"]
 status: "inferred"
 confidence: "medium"
+created_at: ""
+notes: ""
 ```
 
 ## Context Pack
@@ -451,6 +478,75 @@ Required sections:
 - next actions
 
 The report is an evidence-backed review artifact. It is not an automatic rewrite and does not apply patches.
+
+## v0.5 Draft Prompt
+
+Default path:
+
+```text
+branches/<branch>/draft_prompts/chapter_XXX_draft_prompt.md
+```
+
+Required metadata:
+
+- `schema_version: 0.5`
+- `generated_at`
+- `branch`
+- `chapter`
+- `chapter_label`
+- `output_mode`
+- `context_pack`
+- `context_pack_status`
+- `chapter_function_card`
+- `chapter_function_card_status`
+- `suggested_draft_output`
+
+The prompt instructs Codex/model to read the context pack and function card, avoid `raw_text/full_text.txt`, write only when requested, and stage post-write updates through pending patches.
+
+## v0.5 Quality Review Prompt
+
+Default path:
+
+```text
+branches/<branch>/reviews/chapter_XXX_quality_review_prompt.md
+```
+
+Required metadata:
+
+- `schema_version: 0.5`
+- `generated_at`
+- `branch`
+- `chapter`
+- `chapter_label`
+- `draft`
+- `draft_status`
+- `context_pack`
+- `context_pack_status`
+- `report_output`
+- `severity_scope`
+
+The prompt is not the review itself. It tells Codex/model how to fill the quality report using evidence from the draft and context pack.
+
+## v0.5 Patch Review Report
+
+Default path:
+
+```text
+pending_updates/<patch_stem>_review.md
+```
+
+Required sections:
+
+- `schema_version: 0.5`
+- patch metadata
+- summary counts
+- safe updates
+- review-only updates
+- requires user confirmation
+- potential conflicts
+- dry-run and apply guidance
+
+Safe update fields are currently `updates.timeline`, `updates.foreshadowing_added`, `updates.open_questions_added`, and `updates.continuity_issues`. Other update fields are review-only unless a future helper explicitly supports them.
 
 ## Navigation Index Entry
 

@@ -46,6 +46,30 @@ notes: ""
 
 `scripts/apply_patch.py` is a guarded helper, not a general YAML merge engine.
 
+## v0.5 Patch Review Report
+
+Create a human-readable report before applying a pending patch:
+
+```bash
+python scripts/novel_project.py create-patch-review --project-root ./projects/my-novel --patch ./projects/my-novel/pending_updates/chapter_012_patch.yaml --force
+```
+
+Default output:
+
+```text
+pending_updates/chapter_012_patch_review.md
+```
+
+The report separates:
+
+- safe updates that `apply-patch` can merge after dry-run and review
+- review-only updates that require manual handling
+- `requires_user_confirmation`
+- `potential_conflicts`
+- dry-run and apply command guidance
+
+The review report does not apply the patch and does not confirm major plot changes.
+
 Dry-run first:
 
 ```bash
@@ -80,6 +104,8 @@ Review-only in v0.4:
 - `updates.organizations`
 - `updates.items`
 - `updates.terms`
+- `updates.foreshadowing_paid_off`
+- `updates.hard_constraints_added`
 
 ## Relationship to Bible Files
 

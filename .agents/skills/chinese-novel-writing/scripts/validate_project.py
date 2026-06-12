@@ -12,7 +12,7 @@ from pathlib import Path
 from _novel_utils import parse_mapping_list, parse_progress
 
 
-CURRENT_SCHEMA_VERSION = "0.4"
+CURRENT_SCHEMA_VERSION = "0.5"
 
 REQUIRED_DIRS = [
     "raw_text",
@@ -446,13 +446,13 @@ def check_quality_workflow_suggestions(project: Path, suggestions: list[str]) ->
             for draft in sorted(path for path in drafts_dir.iterdir() if path.is_file() and not path.name.startswith(".")):
                 if not any(reviews_dir.glob(f"{draft.stem}*quality_report.md")):
                     suggestions.append(
-                        f"draft {draft.relative_to(project)} has no quality report; run create-quality-report"
+                        f"draft {draft.relative_to(project)} has no quality report; run create-quality-report --with-prompt"
                     )
                     break
 
     pending_patches = [path for path in (project / "pending_updates").glob("*.yaml")]
     if pending_patches:
-        suggestions.append("pending patches exist; run apply-patch without --confirm first for a dry run")
+        suggestions.append("pending patches exist; run create-patch-review, then apply-patch without --confirm for a dry run")
 
 
 def validate_project(project: Path) -> tuple[list[str], list[str], list[str]]:
@@ -508,7 +508,7 @@ def print_section(title: str, items: list[str]) -> None:
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Validate a novel project structure and v0.4 schemas.")
+    parser = argparse.ArgumentParser(description="Validate a novel project structure and v0.5 workflow schemas.")
     parser.add_argument("--project", required=True, type=Path, help="Novel project root.")
     return parser.parse_args(argv)
 

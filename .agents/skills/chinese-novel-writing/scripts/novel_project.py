@@ -335,6 +335,26 @@ def command_build_context_pack(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_create_draft_prompt(args: argparse.Namespace) -> int:
+    script_args = [
+        "--project",
+        path_text(args.project_root),
+        "--branch",
+        args.branch,
+        "--chapter",
+        args.chapter,
+        "--output-mode",
+        args.output_mode,
+    ]
+    add_value(script_args, "--context-pack", args.context_pack)
+    add_value(script_args, "--function-card", args.function_card)
+    add_value(script_args, "--output", args.output)
+    add_value(script_args, "--draft-output", args.draft_output)
+    add_flag(script_args, args.force, "--force")
+    run_step("Create chapter draft prompt", "create_draft_prompt.py", script_args)
+    return 0
+
+
 def command_create_patch(args: argparse.Namespace) -> int:
     script_args = [
         "--project",
@@ -348,6 +368,19 @@ def command_create_patch(args: argparse.Namespace) -> int:
     add_value(script_args, "--output", args.output)
     add_flag(script_args, args.force, "--force")
     run_step("Create pending patch", "create_patch.py", script_args)
+    return 0
+
+
+def command_create_patch_review(args: argparse.Namespace) -> int:
+    script_args = [
+        "--project",
+        path_text(args.project_root),
+        "--patch",
+        path_text(args.patch),
+    ]
+    add_value(script_args, "--output", args.output)
+    add_flag(script_args, args.force, "--force")
+    run_step("Create patch review report", "create_patch_review.py", script_args)
     return 0
 
 
@@ -365,7 +398,10 @@ def command_create_quality_report(args: argparse.Namespace) -> int:
     add_value(script_args, "--draft", args.draft)
     add_value(script_args, "--context-pack", args.context_pack)
     add_value(script_args, "--output", args.output)
+    add_value(script_args, "--prompt-output", args.prompt_output)
     add_flag(script_args, args.template_only, "--template-only")
+    add_flag(script_args, args.with_prompt, "--with-prompt")
+    add_flag(script_args, args.prompt_only, "--prompt-only")
     add_flag(script_args, args.force, "--force")
     run_step("Create chapter quality report", "create_quality_report.py", script_args)
     return 0
@@ -555,6 +591,21 @@ def build_parser() -> argparse.ArgumentParser:
     context_pack.add_argument("--force", action="store_true")
     context_pack.set_defaults(func=command_build_context_pack)
 
+    draft_prompt = subparsers.add_parser(
+        "create-draft-prompt",
+        help="Create a deterministic chapter drafting prompt from a context pack and function card.",
+    )
+    project_arg(draft_prompt)
+    draft_prompt.add_argument("--branch", default="main")
+    draft_prompt.add_argument("--chapter", required=True)
+    draft_prompt.add_argument("--context-pack", type=Path)
+    draft_prompt.add_argument("--function-card", type=Path)
+    draft_prompt.add_argument("--output", type=Path)
+    draft_prompt.add_argument("--draft-output", type=Path)
+    draft_prompt.add_argument("--output-mode", default="draft_with_notes")
+    draft_prompt.add_argument("--force", action="store_true")
+    draft_prompt.set_defaults(func=command_create_draft_prompt)
+
     create_patch = subparsers.add_parser("create-patch", help="Create a pending post-write patch.")
     project_arg(create_patch)
     create_patch.add_argument("--branch", default="main")
@@ -564,9 +615,19 @@ def build_parser() -> argparse.ArgumentParser:
     create_patch.add_argument("--force", action="store_true")
     create_patch.set_defaults(func=command_create_patch)
 
+    patch_review = subparsers.add_parser(
+        "create-patch-review",
+        help="Create a human-readable review report for a pending patch.",
+    )
+    project_arg(patch_review)
+    patch_review.add_argument("--patch", required=True, type=Path)
+    patch_review.add_argument("--output", type=Path)
+    patch_review.add_argument("--force", action="store_true")
+    patch_review.set_defaults(func=command_create_patch_review)
+
     quality_report = subparsers.add_parser(
         "create-quality-report",
-        help="Create a chapter quality-report template.",
+        help="Create a chapter quality-report template and optional review prompt.",
     )
     project_arg(quality_report)
     quality_report.add_argument("--branch", default="main")
@@ -574,7 +635,10 @@ def build_parser() -> argparse.ArgumentParser:
     quality_report.add_argument("--draft", type=Path)
     quality_report.add_argument("--context-pack", type=Path)
     quality_report.add_argument("--output", type=Path)
+    quality_report.add_argument("--prompt-output", type=Path)
     quality_report.add_argument("--template-only", action="store_true")
+    quality_report.add_argument("--with-prompt", action="store_true")
+    quality_report.add_argument("--prompt-only", action="store_true")
     quality_report.add_argument("--severity", choices=("serious", "medium", "light", "all"), default="all")
     quality_report.add_argument("--force", action="store_true")
     quality_report.set_defaults(func=command_create_quality_report)

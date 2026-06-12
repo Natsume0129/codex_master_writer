@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create a deterministic chapter quality-report template."""
+"""Create deterministic chapter quality-report and review-prompt templates."""
 
 from __future__ import annotations
 
@@ -21,6 +21,10 @@ def default_draft(project: Path, branch: str, chapter_label: str) -> Path:
 
 def default_context_pack(project: Path) -> Path:
     return project / "context_packs" / "latest_context_pack.md"
+
+
+def default_prompt_output(project: Path, branch: str, chapter_label: str) -> Path:
+    return project / "branches" / branch / "reviews" / f"{chapter_label}_quality_review_prompt.md"
 
 
 def render_report(args: argparse.Namespace, draft: Path, context_pack: Path, output: Path) -> str:
@@ -115,6 +119,71 @@ notes: "Candidate patch items from quality report. Review before apply-patch --c
 """
 
 
+def render_review_prompt(
+    args: argparse.Namespace,
+    draft: Path,
+    context_pack: Path,
+    report_output: Path,
+    prompt_output: Path,
+) -> str:
+    project = args.project.resolve()
+    draft_rel = safe_relative(draft, project)
+    context_rel = safe_relative(context_pack, project)
+    report_rel = safe_relative(report_output, project)
+    prompt_rel = safe_relative(prompt_output, project)
+    return f"""# Chapter Quality Review Prompt
+
+schema_version: 0.5
+generated_at: {now_iso()}
+branch: {args.branch}
+chapter: {args.chapter}
+chapter_label: {args.chapter_label}
+draft: {draft_rel}
+draft_status: {"present" if draft.exists() else "missing"}
+context_pack: {context_rel}
+context_pack_status: {"present" if context_pack.exists() else "missing"}
+report_output: {report_rel}
+prompt_output: {prompt_rel}
+severity_scope: {args.severity}
+
+## Task
+
+Review the draft against the context pack and fill the quality report at `{report_rel}`.
+
+## Required Reading
+
+1. Read `{context_rel}`.
+2. Read `{draft_rel}`.
+3. Do not read `raw_text/full_text.txt`.
+4. Do not silently expand scope to unrelated canon files unless the context pack points to a narrow source needed for evidence.
+
+## Review Dimensions
+
+- Character consistency and voice.
+- Branch boundary and canon consistency.
+- Timeline, item state, world-rule, and information-asymmetry conflicts.
+- Chapter function, scene-beat payoff, pacing, conflict strength, and ending hook.
+- Foreshadowing added, reinforced, paid off, abandoned, or contradicted.
+- Style drift, repetition, generic phrasing, and flattened dialogue.
+- Unapproved major plot decisions.
+
+## Evidence Rules
+
+- Every finding must cite the draft, context pack, function card, or a source named inside the context pack.
+- Mark uncertain issues as uncertain; do not promote inferred facts to confirmed.
+- Do not rewrite the draft inside the report unless the user asked for revision.
+- Put canon, timeline, relationship, foreshadowing, or hard-constraint updates under patch candidates.
+- Any major plot change must go under `requires_user_confirmation`.
+
+## Output Contract
+
+- Fill `{report_rel}`.
+- Keep serious, medium, and light findings separated.
+- Include a concise next-action recommendation.
+- Do not apply patches automatically.
+"""
+
+
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Create a chapter quality-report template.")
     parser.add_argument("--project", "--project-root", dest="project", required=True, type=Path)
@@ -123,7 +192,10 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--draft", type=Path)
     parser.add_argument("--context-pack", type=Path)
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--prompt-output", type=Path)
     parser.add_argument("--template-only", action="store_true")
+    parser.add_argument("--with-prompt", action="store_true")
+    parser.add_argument("--prompt-only", action="store_true")
     parser.add_argument("--severity", choices=("serious", "medium", "light", "all"), default="all")
     parser.add_argument("--force", action="store_true")
     return parser.parse_args(argv)
@@ -159,18 +231,35 @@ def main(argv: list[str] | None = None) -> int:
         if args.output
         else branch_dir / "reviews" / f"{args.chapter_label}_quality_report.md"
     )
+    prompt_output = (
+        resolve_project_relative(project, args.prompt_output)
+        if args.prompt_output
+        else default_prompt_output(project, args.branch, args.chapter_label)
+    )
     assert output is not None
-    if output.exists() and not args.force:
+    assert prompt_output is not None
+    if not args.prompt_only and output.exists() and not args.force:
         print(f"error: output exists: {output}. Use --force to overwrite.", file=sys.stderr)
+        return 1
+    if (args.with_prompt or args.prompt_only) and prompt_output.exists() and not args.force:
+        print(f"error: prompt output exists: {prompt_output}. Use --force to overwrite.", file=sys.stderr)
         return 1
     if not args.template_only and not draft.exists():
         print(f"warning: draft not found: {draft}")
     if not context_pack.exists():
         print(f"warning: context pack not found: {context_pack}")
 
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(render_report(args, draft, context_pack, output), encoding="utf-8")
-    print(f"Wrote quality report: {output}")
+    if not args.prompt_only:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(render_report(args, draft, context_pack, output), encoding="utf-8")
+        print(f"Wrote quality report: {output}")
+    if args.with_prompt or args.prompt_only:
+        prompt_output.parent.mkdir(parents=True, exist_ok=True)
+        prompt_output.write_text(
+            render_review_prompt(args, draft, context_pack, output, prompt_output),
+            encoding="utf-8",
+        )
+        print(f"Wrote quality review prompt: {prompt_output}")
     return 0
 
 

@@ -12,7 +12,7 @@ python .agents/skills/chinese-novel-writing/scripts/novel_project.py <subcommand
 
 Use lower-level scripts only when a task needs fine-grained control or direct compatibility with an existing workflow.
 
-Supported v0.4 subcommands:
+Supported v0.5 subcommands:
 
 - `init`
 - `split-import`
@@ -27,8 +27,10 @@ Supported v0.4 subcommands:
 - `new-branch`
 - `create-function-card`
 - `build-context-pack`
+- `create-draft-prompt`
 - `create-quality-report`
 - `create-patch`
+- `create-patch-review`
 - `apply-patch`
 - `validate`
 
@@ -110,6 +112,14 @@ python .agents/skills/chinese-novel-writing/scripts/novel_project.py build-conte
 
 The context pack must stay task-specific. It must not include full raw text or unrelated full canon files.
 
+Create a deterministic drafting prompt before writing prose:
+
+```bash
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-draft-prompt --project-root ./projects/my-novel --branch main --chapter 12 --force
+```
+
+The prompt references the context pack and chapter function card. The script does not write the chapter body.
+
 Create a quality report template after drafting or before detailed review:
 
 ```bash
@@ -120,6 +130,12 @@ Relative `--draft`, `--context-pack`, and `--output` paths are resolved under `-
 
 ```bash
 python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-quality-report --project-root ./projects/my-novel --branch main --chapter 12 --draft branches/main/drafts/chapter_012.md --context-pack context_packs/latest_context_pack.md --force
+```
+
+Generate a review prompt with the quality report:
+
+```bash
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-quality-report --project-root ./projects/my-novel --branch main --chapter 12 --draft branches/main/drafts/chapter_012.md --context-pack context_packs/latest_context_pack.md --with-prompt --force
 ```
 
 ## Rewrite Plot
@@ -138,6 +154,12 @@ Create a pending patch after drafting or major outline changes:
 
 ```bash
 python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-patch --project-root ./projects/my-novel --branch main --chapter 12
+```
+
+Create a readable review report before apply:
+
+```bash
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-patch-review --project-root ./projects/my-novel --patch ./projects/my-novel/pending_updates/chapter_012_patch.yaml --force
 ```
 
 Dry-run before applying:

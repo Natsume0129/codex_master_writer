@@ -27,12 +27,12 @@ Map each request to the nearest workflow in `references/workflows.md`. If the re
 - `extraction_progress_manager`: track chunk/chapter/batch extraction state in `imports/extraction_progress.yaml`.
 - `index_builder`: rebuild lightweight navigation indexes from extracted cards and canon files; indexes are not source of truth.
 - `context_pack_builder`: assemble only task-relevant facts, summaries, and constraints.
-- `drafting_pipeline`: write from chapter goals and context pack, then run quality checks.
+- `drafting_pipeline`: generate a draft prompt from the chapter function card and context pack, write only after model review, then run quality checks.
 - `continuation_pipeline`: continue only after branch and recent context are known.
 - `plot_rewrite_pipeline`: create or use an alternate branch before changing causal development.
 - `post_write_update_pipeline`: generate pending patch files instead of directly editing bible files.
-- `patch_apply_pipeline`: dry-run pending patches first, then apply only limited safe updates after explicit confirmation.
-- `quality_gate`: check consistency, branch boundaries, style drift, pacing, and major plot-control risks.
+- `patch_apply_pipeline`: create a patch review report, dry-run pending patches first, then apply only limited safe updates after explicit confirmation.
+- `quality_gate`: generate or fill quality reports from draft plus context pack, checking consistency, branch boundaries, style drift, pacing, and major plot-control risks.
 
 ## P0 Hard Rules
 
@@ -64,9 +64,9 @@ Load only the reference needed for the current task:
 
 ## Script Usage
 
-Use `scripts/novel_project.py` as the preferred v0.4 unified CLI for deterministic file work. Use lower-level scripts only when fine-grained control is needed.
+Use `scripts/novel_project.py` as the preferred v0.5 unified CLI for deterministic file work. Use lower-level scripts only when fine-grained control is needed.
 
-- `scripts/novel_project.py` exposes `init`, `split-import`, `init-progress`, `create-batch`, `import-status`, `create-chapter-card-batch`, `create-volume-summary-batch`, `create-bible-patch-batch`, `mark-done`, `build-indexes`, `new-branch`, `create-function-card`, `build-context-pack`, `create-quality-report`, `create-patch`, `apply-patch`, and `validate`.
+- `scripts/novel_project.py` exposes `init`, `split-import`, `init-progress`, `create-batch`, `import-status`, `create-chapter-card-batch`, `create-volume-summary-batch`, `create-bible-patch-batch`, `mark-done`, `build-indexes`, `new-branch`, `create-function-card`, `build-context-pack`, `create-draft-prompt`, `create-quality-report`, `create-patch`, `create-patch-review`, `apply-patch`, and `validate`.
 - `scripts/init_project.py` creates a project from templates.
 - `scripts/split_chapters.py` splits imported text and writes an import manifest.
 - `scripts/split_chunks.py` splits chapter files into overlapping chunks and writes a chunk manifest.
@@ -79,14 +79,16 @@ Use `scripts/novel_project.py` as the preferred v0.4 unified CLI for determinist
 - `scripts/mark_extraction_done.py` marks chunks or batches as queued, processing, done, failed, or skipped.
 - `scripts/build_indexes.py` rebuilds lightweight navigation indexes without external services.
 - `scripts/create_branch.py` creates isolated alternate-plot branches.
-- `scripts/create_chapter_function_card.py` creates branch-local chapter function cards.
+- `scripts/create_chapter_function_card.py` creates branch-local v0.5 chapter function cards.
 - `scripts/build_context_pack.py` creates a context-pack skeleton without reading full raw text; `--auto-select` can fill selectors from indexes and chapter/recent hints.
-- `scripts/create_quality_report.py` creates a review template under `branches/<branch>/reviews/`.
+- `scripts/create_draft_prompt.py` creates a drafting prompt from the context pack and chapter function card without writing prose.
+- `scripts/create_quality_report.py` creates a review template and can create a review prompt under `branches/<branch>/reviews/`.
 - `scripts/create_patch.py` creates pending post-write update patches.
+- `scripts/create_patch_review.py` creates human-readable patch review reports before patch apply.
 - `scripts/apply_patch.py` dry-runs and then applies limited safe patch updates after confirmation.
 - `scripts/validate_project.py` checks project structure.
 
-Scripts do not perform AI extraction, style imitation, or plot reasoning. Those remain Codex/model tasks guided by the references.
+Scripts do not perform AI extraction, drafting, style imitation, quality review, or plot reasoning. Those remain Codex/model tasks guided by the references.
 
 ## Output Strategy
 

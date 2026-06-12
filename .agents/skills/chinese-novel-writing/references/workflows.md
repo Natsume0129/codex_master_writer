@@ -48,10 +48,12 @@ Steps:
 1. Confirm active branch from `project_config.yaml` or user request.
 2. If chapter goal is missing, create a chapter function card before writing with `scripts/novel_project.py create-function-card`.
 3. Build context pack with `scripts/novel_project.py build-context-pack`; use `--auto-select` when selectors are missing or stale.
-4. Draft according to style guide, current outline, recent summaries, and constraints.
-5. Run quality gate and create a durable report with `scripts/novel_project.py create-quality-report` when a review file is needed.
-6. Generate post-write patch with `scripts/novel_project.py create-patch` and fill candidate updates.
-7. Dry-run `scripts/novel_project.py apply-patch` if the user wants to apply safe post-write updates.
+4. Generate a deterministic writing prompt with `scripts/novel_project.py create-draft-prompt`.
+5. Draft according to the generated prompt, style guide, current outline, recent summaries, and constraints.
+6. Run quality gate and create a durable report plus review prompt with `scripts/novel_project.py create-quality-report --with-prompt` when a review file is needed.
+7. Generate post-write patch with `scripts/novel_project.py create-patch` and fill candidate updates.
+8. Create a patch review report with `scripts/novel_project.py create-patch-review`.
+9. Dry-run `scripts/novel_project.py apply-patch` if the user wants to apply safe post-write updates.
 
 Output: draft according to output mode, short quality summary, and patch summary.
 
@@ -92,10 +94,11 @@ Input: chapter number, chapter goal, outline, or "write this chapter".
 Steps:
 
 1. Require branch, chapter function card or chapter goal, recent summaries or previous ending, relevant facts, foreshadowing, style guide, and hard constraints.
-2. Draft only within the active branch.
-3. Do not introduce major irreversible plot events without confirmation.
-4. Run quality gate.
-5. Create post-write patch.
+2. Build the context pack and create a draft prompt.
+3. Draft only within the active branch.
+4. Do not introduce major irreversible plot events without confirmation.
+5. Run quality gate with a review prompt when the report should persist.
+6. Create post-write patch and patch review report.
 
 Output: chapter draft plus notes according to output mode.
 
@@ -122,7 +125,7 @@ Steps:
 1. Build context pack with the relevant branch; use `--auto-select` if the user did not provide selectors.
 2. Check character consistency, world rules, timeline, item state, information asymmetry, foreshadowing, style drift, pacing, and branch pollution.
 3. Classify findings by severity.
-4. Write `branches/<branch>/reviews/chapter_XXX_quality_report.md` with `create-quality-report` when the review should persist.
+4. Write `branches/<branch>/reviews/chapter_XXX_quality_report.md` and a review prompt with `create-quality-report --with-prompt` when the review should persist.
 5. Suggest fixes without silently rewriting major plot.
 
 Output: severe, medium, light issues, and suggested fixes.

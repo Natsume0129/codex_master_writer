@@ -5,50 +5,58 @@ from __future__ import annotations
 
 import argparse
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 
-
-def yaml_quote(value: str) -> str:
-    escaped = value.replace("\\", "\\\\").replace('"', '\\"')
-    return f'"{escaped}"'
-
-
-def chapter_label(chapter: str) -> str:
-    text = str(chapter).strip()
-    if text.isdigit():
-        return f"chapter_{int(text):03d}"
-    if text.startswith("chapter_"):
-        return text
-    return "chapter_" + text.replace(" ", "_")
+from _novel_utils import normalize_chapter_label, now_iso, yaml_quote
 
 
 def render_card(branch: str, chapter: str, goal: str, source: str, status: str, confidence: str) -> str:
+    chapter_id = normalize_chapter_label(chapter)
     return "\n".join(
         [
-            'schema_version: "0.4"',
-            f"chapter: {yaml_quote(chapter_label(chapter))}",
+            'schema_version: "0.5"',
+            f"chapter: {yaml_quote(chapter_id)}",
             f"branch: {yaml_quote(branch)}",
             f"chapter_goal: {yaml_quote(goal)}",
+            "chapter_function:",
+            '  type: "unknown"',
+            '  purpose: ""',
+            '  reader_promise: ""',
             'main_conflict: ""',
-            "scene_beats: []",
+            "scene_beats:",
+            '  - beat_id: "beat_001"',
+            '    purpose: ""',
+            '    location: ""',
+            "    characters: []",
+            '    conflict: ""',
+            '    outcome: ""',
+            "    required_facts: []",
+            "    forbidden_changes: []",
+            "emotional_arc:",
+            '  start: ""',
+            '  turn: ""',
+            '  end: ""',
             "new_information: []",
             "character_change: []",
             "relationship_change: []",
             "worldbuilding_to_reveal: []",
             "foreshadowing_to_add: []",
             "foreshadowing_to_payoff: []",
-            'ending_hook: ""',
+            "continuity_constraints: []",
             'style_target: ""',
+            'ending_hook: ""',
             "hard_constraints: []",
             "forbidden:",
             '  - "不得自动决定重大剧情变化。"',
             '  - "不得覆盖用户原文。"',
+            "requires_user_confirmation:",
+            '  - change: ""',
+            '    reason: ""',
             f"source: [{yaml_quote(source)}]",
             f"status: {yaml_quote(status)}",
             f"confidence: {yaml_quote(confidence)}",
-            f"created_at: {yaml_quote(datetime.now(timezone.utc).isoformat(timespec='seconds'))}",
-            'notes: "如果用户只提供 goal，其他字段保留为空，由 Codex 在 context pack 后补全。"',
+            f"created_at: {yaml_quote(now_iso())}",
+            'notes: "如果用户只提供 chapter_goal，其他字段先保持为空或 unknown；由 Codex 在读取 context pack 后补全，不由脚本推理。"',
             "",
         ]
     )
@@ -72,7 +80,7 @@ def main(argv: list[str] | None = None) -> int:
     project = args.project.resolve()
     branch_dir = project / "branches" / args.branch
     output_dir = branch_dir / "chapter_function_cards"
-    output = output_dir / f"{chapter_label(args.chapter)}_function_card.yaml"
+    output = output_dir / f"{normalize_chapter_label(args.chapter)}_function_card.yaml"
     try:
         if not branch_dir.exists():
             raise FileNotFoundError(f"branch not found: {branch_dir}")

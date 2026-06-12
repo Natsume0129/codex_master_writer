@@ -14,6 +14,7 @@ A novel project is a file-based knowledge base:
 - `indexes/` stores lightweight lookup files.
 - `context_packs/` stores task-specific context snapshots.
 - `pending_updates/` stores candidate bible updates after drafting or outlining.
+- `branches/<branch>/draft_prompts/` and `branches/<branch>/reviews/` store v0.5 writing and review workflow artifacts.
 
 ## Project Directory
 
@@ -23,7 +24,7 @@ Important directories:
 
 - `canon/`: base facts and original plot map. Alternate branches must not overwrite it.
 - `branches/main/`: main continuation line.
-- `branches/<name>/`: isolated rewrite branch with its own timeline, outline, foreshadowing, continuity log, chapter summaries, drafts, and reviews.
+- `branches/<name>/`: isolated rewrite branch with its own timeline, outline, foreshadowing, continuity log, chapter summaries, draft prompts, drafts, and reviews.
 - `pending_updates/`: candidate updates generated after writing. These patches are reviewed before merging into bible files.
 - `context_packs/`: compact input bundles for current tasks.
 

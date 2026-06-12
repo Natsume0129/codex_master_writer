@@ -43,7 +43,7 @@ Use:
 
 When the user asks for detailed review, include evidence, file/source references, impact, and recommended fix. Do not silently rewrite the story unless revision is requested.
 
-## v0.4 Quality Report File
+## v0.5 Quality Report And Review Prompt
 
 Use `create-quality-report` when a draft or outline needs a durable review artifact:
 
@@ -57,10 +57,23 @@ Relative `--draft`, `--context-pack`, and `--output` paths are resolved under `-
 python scripts/novel_project.py create-quality-report --project-root ./projects/my-novel --branch main --chapter 12 --draft branches/main/drafts/chapter_012.md --context-pack context_packs/latest_context_pack.md --force
 ```
 
+Generate the report template plus a Codex/model review prompt:
+
+```bash
+python scripts/novel_project.py create-quality-report --project-root ./projects/my-novel --branch main --chapter 12 --draft branches/main/drafts/chapter_012.md --context-pack context_packs/latest_context_pack.md --with-prompt --force
+```
+
+Generate only the review prompt when the report file already exists:
+
+```bash
+python scripts/novel_project.py create-quality-report --project-root ./projects/my-novel --branch main --chapter 12 --prompt-only --force
+```
+
 Default output:
 
 ```text
 branches/<branch>/reviews/chapter_XXX_quality_report.md
+branches/<branch>/reviews/chapter_XXX_quality_review_prompt.md
 ```
 
 The report includes:
@@ -74,4 +87,4 @@ The report includes:
 - evidence table
 - next actions
 
-The script creates a template only. Codex/model review must fill findings with evidence from the draft and context pack. Major plot fixes still require explicit user confirmation before patch application.
+The script creates templates and prompts only. Codex/model review must fill findings with evidence from the draft and context pack. Major plot fixes still require explicit user confirmation before patch application.

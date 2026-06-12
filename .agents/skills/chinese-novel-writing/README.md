@@ -33,6 +33,26 @@ v0.4.1 is a small bugfix release. It keeps `schema_version: "0.4"` and does not 
 - `create-quality-report` resolves `--draft`, `--context-pack`, and `--output` relative to `--project-root` when those paths are not absolute.
 - `validate` may print `Suggestions`. Suggestions are workflow guidance, not failure. Hard validation failure is determined by `Errors`; `Errors: none` is the structural acceptance signal.
 
+## v0.5 Additions
+
+v0.5 adds writing-quality workflow artifacts while keeping scripts deterministic. The scripts still generate files, prompts, templates, and review reports only; Codex/model performs drafting, review, reasoning, and style judgment.
+
+- `create-function-card` now writes a `schema_version: "0.5"` chapter function card with chapter function, scene beats, emotional arc, continuity constraints, forbidden changes, and user-confirmation fields.
+- `create-draft-prompt` writes `branches/<branch>/draft_prompts/chapter_XXX_draft_prompt.md` from a context pack and chapter function card. It does not write prose.
+- `create-quality-report --with-prompt` writes the existing quality report template plus a review prompt. `--prompt-only` writes only the review prompt.
+- `create-patch-review` writes a human-readable report for a pending patch, separating safe updates, review-only updates, required confirmations, and potential conflicts.
+
+Minimal v0.5 writing-quality flow:
+
+```bash
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-function-card --project-root ./tmp/demo_novel --branch main --chapter 1 --goal "测试章节功能卡" --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py build-context-pack --project-root ./tmp/demo_novel --branch main --task continue_story --chapter 1 --include-recent 3 --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-draft-prompt --project-root ./tmp/demo_novel --branch main --chapter 1 --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-quality-report --project-root ./tmp/demo_novel --branch main --chapter 1 --with-prompt --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-patch --project-root ./tmp/demo_novel --branch main --chapter 1 --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-patch-review --project-root ./tmp/demo_novel --patch ./tmp/demo_novel/pending_updates/chapter_001_patch.yaml --force
+```
+
 Project-relative quality report paths:
 
 ```bash
@@ -181,13 +201,16 @@ python .agents/skills/chinese-novel-writing/scripts/novel_project.py validate --
 - `create_branch.py`
 - `create_chapter_function_card.py`
 - `build_context_pack.py`
+- `create_draft_prompt.py`
 - `create_quality_report.py`
 - `create_patch.py`
+- `create_patch_review.py`
 - `apply_patch.py`
 - `validate_project.py`
 
 ## Schema 取舍
 
+- v0.5 uses `schema_version: "0.5"` for chapter function cards, draft prompts, quality review prompts, and patch review reports. Existing v0.4 project skeleton files remain valid unless a future migration explicitly changes them.
 - v0.4 使用 `schema_version: "0.4"` 标记新模板和新生成文件。
 - `output_mode` 是 canonical 字段；旧需求里的 `preferred_output_mode` 不是当前实现主字段。
 - 重要事实继续使用 `source` / `status` / `confidence`。
