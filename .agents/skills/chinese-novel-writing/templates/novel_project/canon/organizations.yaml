@@ -4,11 +4,12 @@ organizations:
     role_in_story: ""
     public_goal: ""
     hidden_goal: ""
-    status:
+    operational_state:
       value: ""
       status: "uncertain"
       source: []
       confidence: "low"
+      last_seen: ""
+      notes: ""
     members: []
     notes: ""
-

@@ -2,6 +2,27 @@
 
 These schemas define the expected shape of project files. YAML examples are templates, not complete story data.
 
+## Fact Value
+
+Use this exact fact envelope for important settings. Do not use the old separate fact-status key.
+
+```yaml
+value: ""
+status: "confirmed | inferred | uncertain | user_override | deprecated"
+source: []
+confidence: "high | medium | low"
+last_seen: ""
+notes: ""
+```
+
+Status rules:
+
+- `confirmed`: directly supported by source text or explicit user confirmation.
+- `inferred`: suggested by multiple clues but not directly confirmed.
+- `uncertain`: evidence is weak, ambiguous, contradictory, or incomplete.
+- `user_override`: explicitly supplied by the user; highest priority.
+- `deprecated`: superseded or intentionally retired; exclude from normal context packs.
+
 ## project_config.yaml
 
 ```yaml
@@ -23,19 +44,6 @@ created_at: ""
 updated_at: ""
 ```
 
-## Fact Value
-
-Every important setting should support:
-
-```yaml
-value: ""
-status: "confirmed | inferred | uncertain | user_override | deprecated"
-source: []
-confidence: "high | medium | low"
-last_seen: ""
-notes: ""
-```
-
 ## Character
 
 ```yaml
@@ -44,21 +52,31 @@ characters:
     name: ""
     aliases: []
     role: "protagonist | antagonist | supporting | minor | unknown"
-    status:
+    life_state:
       value: "alive | dead | missing | unknown"
-      fact_status: "confirmed | inferred | uncertain | user_override | deprecated"
+      status: "confirmed | inferred | uncertain | user_override | deprecated"
       source: []
       confidence: "high | medium | low"
+      last_seen: ""
+      notes: ""
     identity:
       value: ""
-      fact_status: "confirmed | inferred | uncertain | user_override | deprecated"
+      status: "confirmed | inferred | uncertain | user_override | deprecated"
       source: []
       confidence: "high | medium | low"
+      last_seen: ""
+      notes: ""
     goals: []
     fears: []
     secrets: []
     abilities: []
-    current_state: ""
+    current_state:
+      value: ""
+      status: "confirmed | inferred | uncertain | user_override | deprecated"
+      source: []
+      confidence: "high | medium | low"
+      last_seen: ""
+      notes: ""
     relationships: []
     speech_style: ""
     first_appearance: ""
@@ -84,6 +102,8 @@ relationships:
 
 ## Item, Location, Organization, Term
 
+Use the fact envelope for mutable item state, location description, organization state, and term meaning.
+
 ```yaml
 items:
   - id: ""
@@ -94,10 +114,9 @@ items:
       status: "confirmed | inferred | uncertain | user_override | deprecated"
       source: []
       confidence: "high | medium | low"
-    notes: ""
+      last_seen: ""
+      notes: ""
 ```
-
-Use the same source/status/confidence pattern for `locations`, `organizations`, and `terms`.
 
 ## Timeline Event
 
@@ -113,6 +132,7 @@ timeline:
     causes: []
     effects: []
     branch: "main"
+    status: "confirmed | inferred | uncertain | user_override | deprecated"
     source: []
     confidence: "high | medium | low"
 ```
@@ -132,6 +152,55 @@ foreshadowing:
     actual_payoff: ""
     source: []
     confidence: "high | medium | low"
+    last_seen: ""
+    notes: ""
+```
+
+## Plot Node
+
+```yaml
+plot_nodes:
+  - id: ""
+    chapter: ""
+    event: ""
+    summary: ""
+    causes: []
+    effects: []
+    required_conditions: []
+    affected_characters: []
+    affected_relationships: []
+    affected_factions: []
+    affected_items: []
+    affected_world_rules: []
+    foreshadowing_links: []
+    can_survive_divergence: true
+    replacement_needed_if_changed: false
+    source: []
+    confidence: "medium"
+```
+
+## Divergence Analysis
+
+```yaml
+divergence_analysis:
+  divergence_id: ""
+  branch: ""
+  original_fact: ""
+  changed_fact: ""
+  divergence_time: ""
+  impact_radius: ""
+  preserved_facts: []
+  can_change: []
+  invalidated_plot_nodes: []
+  preserved_plot_nodes: []
+  inverted_plot_nodes: []
+  replacement_plot_nodes: []
+  new_conflicts: []
+  relationship_impacts: []
+  faction_impacts: []
+  timeline_impacts: []
+  unresolved_risks: []
+  requires_user_decision: []
 ```
 
 ## Branch Config
@@ -141,6 +210,8 @@ branch_name: "main"
 branch_type: "main | alternate"
 title: ""
 base_branch: ""
+base_chapter: ""
+inherit_mode: "skeleton | current-state"
 divergence_point: ""
 created_at: ""
 status: "active"
@@ -152,17 +223,52 @@ notes: ""
 ```yaml
 chapter_id: "chapter_001"
 title: ""
-source_file: ""
+source_files: []
 summary: ""
 chapter_function: ""
-key_events: []
+major_events: []
 characters_present: []
+relationship_changes: []
+new_worldbuilding: []
 locations: []
+organizations: []
 items: []
+terms: []
+timeline_events: []
 foreshadowing: []
 open_questions: []
+ending_hook: ""
+style_snapshot: ""
+facts:
+  - category: ""
+    value: ""
+    status: "confirmed | inferred | uncertain | user_override | deprecated"
+    source: []
+    confidence: "high | medium | low"
+    notes: ""
+```
+
+## Chapter Function Card
+
+```yaml
+chapter: ""
+branch: ""
+chapter_goal: ""
+main_conflict: ""
+scene_beats: []
+new_information: []
+character_change: []
+relationship_change: []
+worldbuilding_to_reveal: []
+foreshadowing_to_add: []
+foreshadowing_to_payoff: []
+ending_hook: ""
+style_target: ""
+hard_constraints: []
+forbidden: []
 source: []
-confidence: "high | medium | low"
+status: "inferred"
+confidence: "medium"
 ```
 
 ## Context Pack
@@ -171,4 +277,4 @@ See `context_pack.md` for the full structure.
 
 ## Patch
 
-See `patch_update.md` for the full post-write patch schema.
+See `patch_update.md` for the post-write patch schema.

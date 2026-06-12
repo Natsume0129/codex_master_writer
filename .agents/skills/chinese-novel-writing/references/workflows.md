@@ -24,9 +24,10 @@ Steps:
 
 1. Save raw source text without destructive cleanup.
 2. Run `scripts/split_chapters.py` when a text file is available.
-3. Build chunk cards and chapter cards in batches. Do not read the whole source into context.
-4. Create chapter summaries, volume summaries, story bible drafts, indexes, and import report.
-5. Mark extracted facts as `confirmed` only when directly supported by source text. Use `inferred` or `uncertain` for model interpretation.
+3. Run `scripts/split_chunks.py` to split long chapters into overlapping chunks.
+4. Build chunk cards and chapter cards in batches using `references/extraction_prompts.md`. Do not read the whole source into context.
+5. Create chapter summaries, volume summaries, story bible drafts, plot nodes, indexes, and import report.
+6. Mark extracted facts as `confirmed` only when directly supported by source text. Use `inferred` or `uncertain` for model interpretation.
 
 Output: import report, missing sections, and suggested next extraction batch.
 
@@ -38,7 +39,7 @@ Steps:
 
 1. Confirm active branch from `project_config.yaml` or user request.
 2. Build context pack with `scripts/build_context_pack.py`, then let Codex fill relevant missing sections from summaries and bible files.
-3. If chapter goal is missing, create a chapter function card before writing.
+3. If chapter goal is missing, create a chapter function card before writing with `scripts/create_chapter_function_card.py`.
 4. Draft according to style guide, current outline, recent summaries, and constraints.
 5. Run quality gate.
 6. Generate post-write patch with `scripts/create_patch.py` and fill candidate updates.
@@ -53,10 +54,11 @@ Steps:
 
 1. Read canon and original plot map summaries only as needed.
 2. Identify divergence point, impact radius, preserved facts, and allowed changes.
-3. Create a new branch with `scripts/create_branch.py`.
-4. Produce 2-3 route options when the change is high impact.
-5. Recalculate relationships, causal chain, antagonist plan, timeline, foreshadowing, and outline within the new branch.
-6. Run branch pollution and plausibility checks.
+3. Map original plot nodes as preserved, invalidated, inverted, or needing replacement.
+4. Create a new branch with `scripts/create_branch.py`, defaulting to `--inherit skeleton`.
+5. Produce 2-3 route options when the change is high impact.
+6. Recalculate relationships, causal chain, antagonist plan, timeline, foreshadowing, and outline within the new branch.
+7. Run branch pollution and plausibility checks.
 
 Output: branch created, divergence summary, route recommendation, outline impact, and pending decisions.
 
@@ -80,7 +82,7 @@ Input: chapter number, chapter goal, outline, or "write this chapter".
 
 Steps:
 
-1. Require branch, chapter goal, recent summaries or previous ending, relevant facts, foreshadowing, style guide, and hard constraints.
+1. Require branch, chapter function card or chapter goal, recent summaries or previous ending, relevant facts, foreshadowing, style guide, and hard constraints.
 2. Draft only within the active branch.
 3. Do not introduce major irreversible plot events without confirmation.
 4. Run quality gate.

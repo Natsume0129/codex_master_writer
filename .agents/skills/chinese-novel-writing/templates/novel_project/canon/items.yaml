@@ -7,7 +7,8 @@ items:
       status: "uncertain"
       source: []
       confidence: "low"
+      last_seen: ""
+      notes: ""
     first_seen: ""
     last_seen: ""
     notes: ""
-

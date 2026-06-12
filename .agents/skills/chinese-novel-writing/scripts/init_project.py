@@ -74,6 +74,7 @@ def ensure_directories(project: Path) -> None:
         "extracted/volume_summaries",
         "canon",
         "branches/main/chapter_summaries",
+        "branches/main/chapter_function_cards",
         "branches/main/drafts",
         "branches/main/reviews",
         "indexes",
@@ -117,4 +118,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

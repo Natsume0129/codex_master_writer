@@ -20,7 +20,7 @@ Never load a 2-million-character or 2-million-word novel into a single context. 
 
 ## Chapter Recognition
 
-The v0.1 script uses common Chinese headings such as:
+The chapter splitter uses common Chinese headings such as:
 
 - `第1章`, `第一章`, `第001章`
 - `卷一`, `第一卷`
@@ -29,6 +29,14 @@ The v0.1 script uses common Chinese headings such as:
 The split is conservative. It preserves original text and reports suspicious empty, duplicate, or very long chapters.
 
 ## Chunking
+
+Run chunk splitting after chapter splitting:
+
+```bash
+python scripts/split_chunks.py --project ./projects/my-novel --chunk-size 6000 --overlap 500
+```
+
+`split_chunks.py` writes `imports/chunk_manifest.yaml`. Each chunk records `chunk_id`, `chapter_id`, `source_file`, `output_file`, `start_char`, `end_char`, `char_count`, `overlap_prev`, and `overlap_next`.
 
 Long chapters should be split further before Codex analysis. A chunk card should include:
 
@@ -54,3 +62,5 @@ The import process should leave:
 ## What Scripts Do Not Do
 
 Scripts do not infer characters, style, motives, themes, or world rules. Codex/model analysis performs that work in batches using chunk cards and source text excerpts.
+
+Use `extraction_prompts.md` when generating chunk cards, chapter cards, volume summaries, story bible patches, plot nodes, and indexes.

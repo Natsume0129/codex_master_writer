@@ -3,21 +3,31 @@ characters:
     name: ""
     aliases: []
     role: "unknown"
-    status:
+    life_state:
       value: "unknown"
-      fact_status: "uncertain"
+      status: "uncertain"
       source: []
       confidence: "low"
+      last_seen: ""
+      notes: ""
     identity:
       value: ""
-      fact_status: "uncertain"
+      status: "uncertain"
       source: []
       confidence: "low"
+      last_seen: ""
+      notes: ""
     goals: []
     fears: []
     secrets: []
     abilities: []
-    current_state: ""
+    current_state:
+      value: ""
+      status: "uncertain"
+      source: []
+      confidence: "low"
+      last_seen: ""
+      notes: ""
     relationships: []
     speech_style: ""
     first_appearance: ""

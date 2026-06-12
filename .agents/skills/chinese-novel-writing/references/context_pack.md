@@ -2,6 +2,16 @@
 
 A context pack is the only approved input bundle for continuation, drafting, rewriting, and review. It contains task-relevant context, not the whole project.
 
+## v0.2 Builder Inputs
+
+`build_context_pack.py` accepts selectors so Codex can include relevant entities without dumping whole bible files:
+
+```bash
+python scripts/build_context_pack.py --project ./projects/my-novel --branch main --task continue_story --chapter 12 --characters 林照夜 沈青辞 --locations 剑冢 --items 破剑 --foreshadowing-ids foreshadowing_007 --include-recent 3 --previous-ending-chars 1500 --format markdown --force
+```
+
+If selectors are absent or indexes do not contain matching entries, the builder records `missing_sections` instead of inserting large unrelated snippets.
+
 ## Default Structure
 
 ```yaml
@@ -81,3 +91,4 @@ Use the draft or outline being reviewed, branch-local timeline, relevant bible f
 - Do not include full `raw_text/full_text.txt`.
 - Do not include other branch timelines or branch-only character states unless comparing branches is the task.
 - Do not include all bible files by default; summarize relevant entries.
+- Do not default to the first 4000 characters of `characters.yaml`, `items.yaml`, or other bible files as relevant context.

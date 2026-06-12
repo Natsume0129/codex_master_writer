@@ -6,6 +6,7 @@ terms:
       status: "uncertain"
       source: []
       confidence: "low"
+      last_seen: ""
+      notes: ""
     category: ""
     notes: ""
-

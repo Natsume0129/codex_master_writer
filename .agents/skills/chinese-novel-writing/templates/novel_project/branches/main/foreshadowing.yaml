@@ -10,4 +10,5 @@ foreshadowing:
     actual_payoff: ""
     source: []
     confidence: "low"
-
+    last_seen: ""
+    notes: ""

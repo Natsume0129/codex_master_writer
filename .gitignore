@@ -11,3 +11,17 @@ dist/
 build/
 .DS_Store
 Thumbs.db
+
+# User novel projects and manuscripts
+projects/
+**/raw_text/full_text.txt
+**/raw_text/chapters/*.txt
+**/chunks/*.txt
+**/drafts/*.md
+**/reviews/*.md
+**/context_packs/*.md
+**/imports/*.yaml
+
+# Keep bundled skill assets tracked
+!.agents/skills/chinese-novel-writing/templates/**
+!.agents/skills/chinese-novel-writing/samples/minimal_chinese_story.txt

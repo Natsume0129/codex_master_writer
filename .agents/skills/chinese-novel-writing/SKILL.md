@@ -49,7 +49,9 @@ Load only the reference needed for the current task:
 - Architecture or directory questions: `references/architecture.md`.
 - User workflow selection: `references/workflows.md`.
 - Long text import: `references/import_pipeline.md`.
+- Batch extraction prompts and card schemas: `references/extraction_prompts.md`.
 - Drafting, continuation, review, or rewrite context: `references/context_pack.md`.
+- Chapter goal planning before drafting: `references/chapter_function_card.md`.
 - Alternate plot or branch work: `references/branch_system.md`.
 - Post-write database updates: `references/patch_update.md`.
 - Consistency review: `references/quality_gate.md`.
@@ -63,7 +65,9 @@ Use scripts for deterministic file work:
 
 - `scripts/init_project.py` creates a project from templates.
 - `scripts/split_chapters.py` splits imported text and writes an import manifest.
+- `scripts/split_chunks.py` splits chapter files into overlapping chunks and writes a chunk manifest.
 - `scripts/create_branch.py` creates isolated alternate-plot branches.
+- `scripts/create_chapter_function_card.py` creates branch-local chapter function cards.
 - `scripts/build_context_pack.py` creates a context-pack skeleton without reading full raw text.
 - `scripts/create_patch.py` creates pending post-write update patches.
 - `scripts/validate_project.py` checks project structure.

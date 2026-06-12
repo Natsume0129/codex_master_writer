@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compatibility wrapper exposing the v0.1 helper scripts as subcommands."""
+"""Compatibility wrapper exposing helper scripts as subcommands."""
 
 from __future__ import annotations
 
@@ -12,7 +12,9 @@ from pathlib import Path
 SCRIPT_MAP = {
     "init": "init_project.py",
     "split-import": "split_chapters.py",
+    "split-chunks": "split_chunks.py",
     "new-branch": "create_branch.py",
+    "create-function-card": "create_chapter_function_card.py",
     "build-context-pack": "build_context_pack.py",
     "create-patch": "create_patch.py",
     "validate": "validate_project.py",
@@ -41,4 +43,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

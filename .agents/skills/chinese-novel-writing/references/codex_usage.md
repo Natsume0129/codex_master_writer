@@ -18,6 +18,14 @@ python .agents/skills/chinese-novel-writing/scripts/split_chapters.py --input ./
 
 Codex should then process chapters/chunks in batches and create summaries, cards, bible facts, and indexes. Do not ask Codex to load the entire novel at once.
 
+Split chapters into chunks:
+
+```bash
+python .agents/skills/chinese-novel-writing/scripts/split_chunks.py --project ./projects/my-novel --chunk-size 6000 --overlap 500
+```
+
+Then use `references/extraction_prompts.md` to process `imports/chunk_manifest.yaml` in small batches.
+
 ## Continue a Story
 
 ```bash
@@ -25,6 +33,12 @@ python .agents/skills/chinese-novel-writing/scripts/build_context_pack.py --proj
 ```
 
 Codex fills missing context from summaries and relevant bible entries, writes the draft, runs the quality gate, then creates a patch.
+
+Create a chapter function card before drafting when the goal is known or inferred:
+
+```bash
+python .agents/skills/chinese-novel-writing/scripts/create_chapter_function_card.py --project ./projects/my-novel --branch main --chapter 12 --goal "主角进入剑冢，发现父亲线索"
+```
 
 ## Create an Alternate Plot Branch
 

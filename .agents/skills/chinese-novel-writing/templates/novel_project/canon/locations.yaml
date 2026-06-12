@@ -6,7 +6,8 @@ locations:
       status: "uncertain"
       source: []
       confidence: "low"
+      last_seen: ""
+      notes: ""
     current_state: ""
     related_characters: []
     notes: ""
-
