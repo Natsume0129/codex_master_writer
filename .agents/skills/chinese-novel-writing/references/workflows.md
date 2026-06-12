@@ -27,10 +27,12 @@ Steps:
 3. Process only the chunks listed in the generated batch file. Do not read `raw_text/full_text.txt`.
 4. Run `scripts/novel_project.py mark-done` after chunk cards are created, or mark failures with an error note.
 5. Run `scripts/novel_project.py create-batch` for the next batch when needed.
-6. Build chunk cards and chapter cards in batches using `references/extraction_prompts.md`. Do not read the whole source into context.
-7. Create chapter summaries, volume summaries, story bible drafts, plot nodes, indexes, and import report.
-8. Run `scripts/novel_project.py build-indexes` after extracted cards or canon files change.
-10. Mark extracted facts as `confirmed` only when directly supported by source text. Use `inferred` or `uncertain` for model interpretation.
+6. Check closure with `scripts/novel_project.py import-status`.
+7. Build chapter cards with `scripts/novel_project.py create-chapter-card-batch` after all chunks for a chapter are done.
+8. Build volume summaries with `scripts/novel_project.py create-volume-summary-batch` after chapter cards are reviewed.
+9. Create story-bible patch candidates with `scripts/novel_project.py create-bible-patch-batch`; do not edit canon directly.
+10. Run `scripts/novel_project.py build-indexes` after extracted cards or canon files change.
+11. Mark extracted facts as `confirmed` only when directly supported by source text. Use `inferred` or `uncertain` for model interpretation.
 
 Output: import report, missing sections, and suggested next extraction batch.
 
@@ -42,9 +44,9 @@ Steps:
 
 1. Confirm active branch from `project_config.yaml` or user request.
 2. If chapter goal is missing, create a chapter function card before writing with `scripts/novel_project.py create-function-card`.
-3. Build context pack with `scripts/novel_project.py build-context-pack`; it automatically loads the active branch's chapter function card when present.
+3. Build context pack with `scripts/novel_project.py build-context-pack`; use `--auto-select` when selectors are missing or stale.
 4. Draft according to style guide, current outline, recent summaries, and constraints.
-5. Run quality gate.
+5. Run quality gate and create a durable report with `scripts/novel_project.py create-quality-report` when a review file is needed.
 6. Generate post-write patch with `scripts/novel_project.py create-patch` and fill candidate updates.
 7. Dry-run `scripts/novel_project.py apply-patch` if the user wants to apply safe post-write updates.
 
@@ -114,10 +116,11 @@ Input: request to审稿, check consistency, or inspect a draft/outline.
 
 Steps:
 
-1. Build context pack with the relevant branch.
+1. Build context pack with the relevant branch; use `--auto-select` if the user did not provide selectors.
 2. Check character consistency, world rules, timeline, item state, information asymmetry, foreshadowing, style drift, pacing, and branch pollution.
 3. Classify findings by severity.
-4. Suggest fixes without silently rewriting major plot.
+4. Write `branches/<branch>/reviews/chapter_XXX_quality_report.md` with `create-quality-report` when the review should persist.
+5. Suggest fixes without silently rewriting major plot.
 
 Output: severe, medium, light issues, and suggested fixes.
 

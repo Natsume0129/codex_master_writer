@@ -6,12 +6,13 @@ from __future__ import annotations
 import argparse
 import re
 import sys
+from collections import Counter
 from pathlib import Path
 
 from _novel_utils import parse_mapping_list, parse_progress
 
 
-CURRENT_SCHEMA_VERSION = "0.3.1"
+CURRENT_SCHEMA_VERSION = "0.4"
 
 REQUIRED_DIRS = [
     "raw_text",
@@ -344,6 +345,7 @@ def check_extraction_progress(project: Path, errors: list[str], warnings: list[s
         errors.append("imports/extraction_progress.yaml chunks section is malformed")
         return
 
+    status_counts: Counter[str] = Counter()
     for chunk in manifest_chunks:
         chunk_id = str(chunk.get("chunk_id", ""))
         if not chunk_id:
@@ -359,6 +361,7 @@ def check_extraction_progress(project: Path, errors: list[str], warnings: list[s
             errors.append(f"extraction_progress chunk {chunk_id} is malformed")
             continue
         status = str(value.get("status", ""))
+        status_counts[status] += 1
         output_file = value.get("output_file", "")
         chunk_card = value.get("chunk_card", "")
         if output_file and not resolve_project_path(project, output_file).exists():
@@ -371,10 +374,22 @@ def check_extraction_progress(project: Path, errors: list[str], warnings: list[s
         if status == "failed" and not value.get("error"):
             warnings.append(f"extraction_progress chunk {chunk_id} failed without error text")
 
+    if status_counts["pending"]:
+        suggestions.append("pending chunks remain; run create-batch, process the batch, then mark-done")
+    if status_counts["queued"] or status_counts["processing"]:
+        suggestions.append("queued or processing chunks remain; process the current batch and run mark-done")
+    if status_counts["failed"]:
+        suggestions.append("failed chunks exist; rerun create-batch --retry-failed after reviewing errors")
+
+    ready_chapters: list[str] = []
     if isinstance(progress_chapters, dict):
         for chapter_id, value in progress_chapters.items():
             if isinstance(value, dict) and value.get("status") == "ready_for_chapter_card":
-                suggestions.append(f"chapter {chapter_id} is ready for chapter card generation")
+                ready_chapters.append(str(chapter_id))
+    if ready_chapters:
+        suggestions.append(
+            "ready_for_chapter_card chapters found; run create-chapter-card-batch"
+        )
 
     if isinstance(progress_batches, dict):
         for batch_id, value in progress_batches.items():
@@ -386,6 +401,58 @@ def check_extraction_progress(project: Path, errors: list[str], warnings: list[s
                 meta = project / "imports" / "batches" / f"{batch_id}_chunk_cards.yaml"
                 if not prompt.exists() or not meta.exists():
                     warnings.append(f"batch {batch_id} is queued but batch prompt/meta file is missing")
+
+
+def missing_context_items(path: Path) -> list[str]:
+    if not path.exists() or not path.is_file():
+        return []
+    text = read_text(path)
+    markdown_match = re.search(r"## Missing Sections\s*(.*?)(?:\n## |\Z)", text, flags=re.S)
+    if markdown_match:
+        block = markdown_match.group(1)
+        return [
+            line.strip()[2:].strip()
+            for line in block.splitlines()
+            if line.strip().startswith("- ") and line.strip() != "- None"
+        ]
+    yaml_match = re.search(r"missing_sections:\s*(.*?)(?:\n\s{0,2}\w|$)", text, flags=re.S)
+    if yaml_match:
+        return [
+            line.strip()[2:].strip().strip('"')
+            for line in yaml_match.group(1).splitlines()
+            if line.strip().startswith("- ")
+        ]
+    return []
+
+
+def check_quality_workflow_suggestions(project: Path, suggestions: list[str]) -> None:
+    chapter_cards = [path for path in (project / "extracted" / "chapter_cards").glob("*.yaml")]
+    volume_summaries = [path for path in (project / "extracted" / "volume_summaries").glob("volume_*.md")]
+    if chapter_cards and not volume_summaries:
+        suggestions.append("chapter cards exist but volume summaries are missing; run create-volume-summary-batch")
+
+    latest_context = project / "context_packs" / "latest_context_pack.md"
+    missing_items = missing_context_items(latest_context)
+    if len(missing_items) >= 5 or any("no selectors provided" in item for item in missing_items):
+        suggestions.append("context pack has many missing sections or no selectors; rerun build-context-pack --auto-select")
+
+    branches_dir = project / "branches"
+    if branches_dir.exists():
+        for branch_dir in sorted(item for item in branches_dir.iterdir() if item.is_dir()):
+            drafts_dir = branch_dir / "drafts"
+            reviews_dir = branch_dir / "reviews"
+            if not drafts_dir.exists():
+                continue
+            for draft in sorted(path for path in drafts_dir.iterdir() if path.is_file() and not path.name.startswith(".")):
+                if not any(reviews_dir.glob(f"{draft.stem}*quality_report.md")):
+                    suggestions.append(
+                        f"draft {draft.relative_to(project)} has no quality report; run create-quality-report"
+                    )
+                    break
+
+    pending_patches = [path for path in (project / "pending_updates").glob("*.yaml")]
+    if pending_patches:
+        suggestions.append("pending patches exist; run apply-patch without --confirm first for a dry run")
 
 
 def validate_project(project: Path) -> tuple[list[str], list[str], list[str]]:
@@ -417,6 +484,7 @@ def validate_project(project: Path) -> tuple[list[str], list[str], list[str]]:
     check_context_pack_size(project, warnings)
     check_chunk_manifest(project, errors, warnings)
     check_extraction_progress(project, errors, warnings, suggestions)
+    check_quality_workflow_suggestions(project, suggestions)
 
     if not (project / "context_packs" / "latest_context_pack.md").exists():
         suggestions.append("generate context_packs/latest_context_pack.md before drafting or review")
@@ -440,7 +508,7 @@ def print_section(title: str, items: list[str]) -> None:
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Validate a novel project structure and v0.3.1 schemas.")
+    parser = argparse.ArgumentParser(description="Validate a novel project structure and v0.4 schemas.")
     parser.add_argument("--project", required=True, type=Path, help="Novel project root.")
     return parser.parse_args(argv)
 

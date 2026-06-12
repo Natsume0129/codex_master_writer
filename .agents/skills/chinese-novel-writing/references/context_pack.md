@@ -2,7 +2,7 @@
 
 A context pack is the only approved input bundle for continuation, drafting, rewriting, and review. It contains task-relevant context, not the whole project.
 
-## v0.3.1 Builder Inputs
+## v0.4 Builder Inputs
 
 `build_context_pack.py` accepts selectors so Codex can include relevant entities without dumping whole bible files:
 
@@ -11,6 +11,14 @@ python scripts/novel_project.py build-context-pack --project-root ./projects/my-
 ```
 
 If selectors are absent or indexes do not contain matching entries, the builder records `missing_sections` instead of inserting large unrelated snippets.
+
+v0.4 can also auto-select selectors from indexes:
+
+```bash
+python scripts/novel_project.py build-context-pack --project-root ./projects/my-novel --branch main --task continue_story --chapter 12 --auto-select --selector-source all --max-selectors 20 --write-selector-report --force
+```
+
+Auto-selection uses the current chapter function card, recent summaries, and matching imported chapter card as hint text, then matches those hints against `indexes/*_index.yaml`. It does not use embeddings, external APIs, `raw_text/full_text.txt`, or full-canon scanning. Manual selectors remain first and are never removed by auto-select.
 
 When `--chapter` is provided, the builder automatically looks for:
 
@@ -29,13 +37,13 @@ Entity retrieval is conservative:
 
 Indexes are navigation aids, not durable truth. If index and canon disagree, prefer source-backed canon entries and mark the conflict for review.
 
-v0.3.1 context packs include a schema marker. Markdown packs use `Schema version: 0.3.1`; YAML packs use `context_pack.schema_version`.
+v0.4 context packs include a schema marker. Markdown packs use `Schema version: 0.4`; YAML packs use `context_pack.schema_version`.
 
 ## Default Structure
 
 ```yaml
 context_pack:
-  schema_version: "0.3.1"
+  schema_version: "0.4"
   task:
     type: continue_story
     user_request: ""
@@ -77,6 +85,12 @@ context_pack:
     must_not_change: []
     must_not_reveal_yet: []
     branch_boundaries: []
+  auto_selection:
+    enabled: false
+    selector_source: all
+    max_selectors: 20
+    source_files: []
+    notes: []
   retrieval_notes: []
   missing_sections: []
 ```

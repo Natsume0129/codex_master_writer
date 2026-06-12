@@ -1,6 +1,6 @@
 # chinese-novel-writing
 
-`chinese-novel-writing` 是一个中文小说项目工作流 skill，用于从零创作、导入续写、资料库维护、context pack 构建、剧情分支改写和一致性检查。v0.3.1 保留当前实际路径：
+`chinese-novel-writing` 是一个中文小说项目工作流 skill，用于从零创作、导入续写、资料库维护、context pack 构建、剧情分支改写和一致性检查。v0.4 保留当前实际路径：
 
 ```text
 .agents/skills/chinese-novel-writing/
@@ -12,6 +12,29 @@
 .agents/skills/chinese-novel-writing/templates/novel_project/
 ```
 
+## v0.4 Additions
+
+v0.4 keeps the existing v0.3.1 happy path and adds import-closure and quality workflow commands:
+
+- `import-status`: writes `imports/import_status.md` with chunk, batch, card, summary, patch, conflict, and next-action status.
+- `create-chapter-card-batch`: creates `batch_XXXX_chapter_cards.md/.yaml` from chapters whose chunks are done or ready.
+- `create-volume-summary-batch`: creates `batch_XXXX_volume_summaries.md/.yaml` from reviewed chapter cards.
+- `create-bible-patch-batch`: creates `batch_XXXX_story_bible_patches.md/.yaml` plus `pending_updates/import_bible_patch_XXXX.yaml` skeletons; it never edits canon directly.
+- `build-context-pack --auto-select`: fills selectors from indexes using the current chapter function card, recent summaries, and matching chapter cards as hints.
+- `create-quality-report`: writes `branches/<branch>/reviews/chapter_XXX_quality_report.md`.
+
+Manual selectors still win over auto-selected selectors. Empty auto-selection is allowed and records `missing_sections` instead of failing.
+
+Minimal v0.4 verification after the old happy path:
+
+```bash
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py import-status --project-root ./tmp/demo_novel
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-chapter-card-batch --project-root ./tmp/demo_novel --batch-size 2 --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py build-context-pack --project-root ./tmp/demo_novel --branch main --task continue_story --chapter 1 --auto-select --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-quality-report --project-root ./tmp/demo_novel --branch main --chapter 1 --template-only --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py validate --project-root ./tmp/demo_novel
+```
+
 ## 它不是什么
 
 - 不是完整写作 App，也不提供 Web UI。
@@ -20,7 +43,7 @@
 - 不承诺“完美处理 200 万字小说”；它提供长文本分层导入和任务级 context pack 架构。
 - 不会在写作后直接覆盖 `canon/`、`timeline.yaml`、`foreshadowing.yaml` 等核心资料库。
 
-## v0.3.1 推荐工作流
+## v0.4 推荐工作流
 
 1. `init` 创建项目。
 2. `split-import` 切章节、切 chunk、初始化 progress、创建第一批 batch。
@@ -95,7 +118,7 @@ python .agents/skills/chinese-novel-writing/scripts/novel_project.py apply-patch
 python .agents/skills/chinese-novel-writing/scripts/novel_project.py apply-patch --project-root ./tmp/demo_novel --patch ./tmp/demo_novel/pending_updates/chapter_001_patch.yaml --confirm
 ```
 
-如果 `requires_user_confirmation` 非空，必须在用户明确同意后加 `--confirm-major`。人物、关系、世界观、地点、组织、物品、术语等复杂更新在 v0.3.1 仍是 review-only。
+如果 `requires_user_confirmation` 非空，必须在用户明确同意后加 `--confirm-major`。人物、关系、世界观、地点、组织、物品、术语等复杂更新在 v0.4 仍是 review-only。
 
 ## Validate
 
@@ -129,18 +152,23 @@ python .agents/skills/chinese-novel-writing/scripts/novel_project.py validate --
 - `split_chunks.py`
 - `init_extraction_progress.py`
 - `create_extraction_batch.py`
+- `import_status.py`
+- `create_chapter_card_batch.py`
+- `create_volume_summary_batch.py`
+- `create_bible_patch_batch.py`
 - `mark_extraction_done.py`
 - `build_indexes.py`
 - `create_branch.py`
 - `create_chapter_function_card.py`
 - `build_context_pack.py`
+- `create_quality_report.py`
 - `create_patch.py`
 - `apply_patch.py`
 - `validate_project.py`
 
 ## Schema 取舍
 
-- v0.3.1 使用 `schema_version: "0.3.1"` 标记新模板和新生成文件。
+- v0.4 使用 `schema_version: "0.4"` 标记新模板和新生成文件。
 - `output_mode` 是 canonical 字段；旧需求里的 `preferred_output_mode` 不是当前实现主字段。
 - 重要事实继续使用 `source` / `status` / `confidence`。
 - `foreshadowing.status` 这类字段表示生命周期状态，不等同于事实证据状态。

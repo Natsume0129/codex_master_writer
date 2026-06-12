@@ -2,15 +2,17 @@
 
 These schemas define the expected shape of project files. YAML examples are templates, not complete story data.
 
-## v0.3.1 Contract
+## v0.4 Contract
 
 - The active skill path is `.agents/skills/chinese-novel-writing/`.
 - New project templates live under `templates/novel_project/`; this is intentional and replaces the older single-file `assets/templates/` idea.
-- New generated files should include `schema_version: "0.3.1"` when the format supports it.
+- New generated files should include `schema_version: "0.4"` when the format supports it.
 - `output_mode` is the canonical output field. `preferred_output_mode` is an older requirements name and is not the current implementation field.
 - Important facts use `source`, `status`, and `confidence`. Do not reintroduce `fact_status`.
 - Indexes are navigation aids, not source of truth.
 - `pending_updates/` is a review queue, not an automatic merge area.
+- Import closure is staged through chapter-card batches, volume-summary batches, and story-bible patch batches. Scripts generate prompts and patch skeletons; they do not perform AI analysis.
+- Context packs may use `--auto-select`, but manual selectors have priority and empty auto-selection remains valid.
 
 ## Fact Value
 
@@ -38,7 +40,7 @@ Some fields named `status` are lifecycle states rather than evidence states. For
 ## project_config.yaml
 
 ```yaml
-schema_version: "0.3.1"
+schema_version: "0.4"
 project_name: ""
 language: "zh-CN"
 primary_mode: "original"
@@ -114,7 +116,7 @@ relationships:
     branch: "canon | main | branch_name"
 ```
 
-For older projects where relationship entries do not yet include `status`, keep `source` and `confidence`, and treat relationship certainty conservatively. v0.3.1 validation may warn but should not fail an otherwise valid empty project for this field.
+For older projects where relationship entries do not yet include `status`, keep `source` and `confidence`, and treat relationship certainty conservatively. v0.4 validation may warn but should not fail an otherwise valid empty project for this field.
 
 ## Item, Location, Organization, Term
 
@@ -222,7 +224,7 @@ divergence_analysis:
 ## Branch Config
 
 ```yaml
-schema_version: "0.3.1"
+schema_version: "0.4"
 branch_name: "main"
 branch_type: "main | alternate"
 title: ""
@@ -238,9 +240,10 @@ notes: ""
 ## Chapter Card
 
 ```yaml
+schema_version: "0.4"
 chapter_id: "chapter_001"
 title: ""
-source_files: []
+source_chunk_cards: []
 summary: ""
 chapter_function: ""
 major_events: []
@@ -268,7 +271,7 @@ facts:
 ## Chapter Function Card
 
 ```yaml
-schema_version: "0.3.1"
+schema_version: "0.4"
 chapter: ""
 branch: ""
 chapter_goal: ""
@@ -296,7 +299,7 @@ See `context_pack.md` for the full structure.
 ## Extraction Progress
 
 ```yaml
-schema_version: "0.3.1"
+schema_version: "0.4"
 project:
   name: ""
   source_manifest: "imports/chunk_manifest.yaml"
@@ -339,7 +342,7 @@ batches:
 ## Extraction Batch Metadata
 
 ```yaml
-schema_version: "0.3.1"
+schema_version: "0.4"
 batch_id: "batch_0001"
 stage: "chunk_cards"
 status: "queued"
@@ -350,6 +353,104 @@ instructions: "Read only listed chunks; facts require source/status/confidence."
 outputs_expected:
   - "extracted/chunk_cards/*.yaml"
 ```
+
+## v0.4 Import Status
+
+Default path: `imports/import_status.md`.
+
+YAML shape when using `--format yaml`:
+
+```yaml
+schema_version: "0.4"
+generated_at: ""
+warnings: []
+chunk_count: 0
+chunk_statuses:
+  pending: 0
+  queued: 0
+  processing: 0
+  done: 0
+  failed: 0
+  skipped: 0
+batch_statuses: {}
+batch_files: []
+chunk_cards_done: 0
+missing_chunk_cards: []
+ready_chapters: []
+chapter_cards_done: []
+missing_chapter_cards: []
+volume_summaries: []
+bible_patches: []
+failed_chunks: []
+next_actions: []
+```
+
+## v0.4 Later-Stage Batch Metadata
+
+Chapter-card batch:
+
+```yaml
+schema_version: "0.4"
+batch_id: "batch_0002"
+stage: "chapter_cards"
+status: "queued"
+chapter_ids:
+  - "chapter_001"
+created_at: ""
+outputs_expected:
+  - "extracted/chapter_cards/*.yaml"
+```
+
+Volume-summary batch:
+
+```yaml
+schema_version: "0.4"
+batch_id: "batch_0003"
+stage: "volume_summaries"
+status: "queued"
+volume: "volume_0001"
+chapter_ids: []
+missing_chapter_cards: []
+created_at: ""
+output: "extracted/volume_summaries/volume_0001.md"
+```
+
+Story-bible patch batch:
+
+```yaml
+schema_version: "0.4"
+batch_id: "batch_0004"
+stage: "story_bible_patches"
+status: "queued"
+source: "all"
+patch_skeleton: "pending_updates/import_bible_patch_batch_0004.yaml"
+source_files: []
+created_at: ""
+```
+
+Patch skeletons created by this batch stay under `pending_updates/` and must be reviewed before `apply-patch --confirm`.
+
+## v0.4 Quality Report
+
+Default path:
+
+```text
+branches/<branch>/reviews/chapter_XXX_quality_report.md
+```
+
+Required sections:
+
+- `schema_version: 0.4`
+- summary
+- serious issues
+- medium issues
+- light issues
+- suggested fixes
+- patch candidates
+- evidence
+- next actions
+
+The report is an evidence-backed review artifact. It is not an automatic rewrite and does not apply patches.
 
 ## Navigation Index Entry
 

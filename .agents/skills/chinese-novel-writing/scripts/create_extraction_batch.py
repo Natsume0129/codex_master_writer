@@ -61,7 +61,7 @@ def render_batch_markdown(batch_id: str, stage: str, records: list[tuple[str, di
 
 def render_batch_yaml(batch_id: str, stage: str, chunk_ids: list[str]) -> str:
     lines = [
-        'schema_version: "0.3.1"',
+        'schema_version: "0.4"',
         f"batch_id: {yaml_quote(batch_id)}",
         f"stage: {yaml_quote(stage)}",
         'status: "queued"',

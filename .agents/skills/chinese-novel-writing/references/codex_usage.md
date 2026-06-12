@@ -12,17 +12,22 @@ python .agents/skills/chinese-novel-writing/scripts/novel_project.py <subcommand
 
 Use lower-level scripts only when a task needs fine-grained control or direct compatibility with an existing workflow.
 
-Supported v0.3.1 subcommands:
+Supported v0.4 subcommands:
 
 - `init`
 - `split-import`
 - `init-progress`
 - `create-batch`
+- `import-status`
+- `create-chapter-card-batch`
+- `create-volume-summary-batch`
+- `create-bible-patch-batch`
 - `mark-done`
 - `build-indexes`
 - `new-branch`
 - `create-function-card`
 - `build-context-pack`
+- `create-quality-report`
 - `create-patch`
 - `apply-patch`
 - `validate`
@@ -59,6 +64,15 @@ After chunk cards are created:
 python .agents/skills/chinese-novel-writing/scripts/novel_project.py mark-done --project-root ./projects/my-novel --batch-id batch_0001 --status done
 ```
 
+Check import closure and create later-stage batches:
+
+```bash
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py import-status --project-root ./projects/my-novel
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-chapter-card-batch --project-root ./projects/my-novel --batch-size 5 --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-volume-summary-batch --project-root ./projects/my-novel --volume 1 --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-bible-patch-batch --project-root ./projects/my-novel --source all --force
+```
+
 Rebuild indexes after extracted cards or canon files change:
 
 ```bash
@@ -81,7 +95,19 @@ Build a context pack before drafting, continuation, rewrite, or review:
 python .agents/skills/chinese-novel-writing/scripts/novel_project.py build-context-pack --project-root ./projects/my-novel --branch main --task continue_story --chapter 12 --include-recent 3 --force
 ```
 
+When selectors are missing, use auto-select:
+
+```bash
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py build-context-pack --project-root ./projects/my-novel --branch main --task continue_story --chapter 12 --auto-select --write-selector-report --force
+```
+
 The context pack must stay task-specific. It must not include full raw text or unrelated full canon files.
+
+Create a quality report template after drafting or before detailed review:
+
+```bash
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-quality-report --project-root ./projects/my-novel --branch main --chapter 12 --template-only --force
+```
 
 ## Rewrite Plot
 

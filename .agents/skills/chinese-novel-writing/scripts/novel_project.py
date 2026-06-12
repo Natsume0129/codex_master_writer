@@ -171,6 +171,61 @@ def command_create_batch(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_import_status(args: argparse.Namespace) -> int:
+    script_args = ["--project", path_text(args.project_root), "--format", args.format]
+    add_value(script_args, "--output", args.output)
+    add_flag(script_args, args.show_pending, "--show-pending")
+    add_flag(script_args, args.show_failed, "--show-failed")
+    add_flag(script_args, args.show_ready, "--show-ready")
+    add_flag(script_args, args.show_next, "--show-next")
+    run_step("Create import status report", "import_status.py", script_args)
+    return 0
+
+
+def command_create_chapter_card_batch(args: argparse.Namespace) -> int:
+    script_args = [
+        "--project",
+        path_text(args.project_root),
+        "--batch-size",
+        str(args.batch_size),
+    ]
+    add_value(script_args, "--chapter", args.chapter)
+    add_flag(script_args, args.only_ready, "--only-ready")
+    add_flag(script_args, args.retry_failed, "--retry-failed")
+    add_flag(script_args, args.dry_run, "--dry-run")
+    add_flag(script_args, args.force, "--force")
+    run_step("Create chapter-card batch", "create_chapter_card_batch.py", script_args)
+    return 0
+
+
+def command_create_volume_summary_batch(args: argparse.Namespace) -> int:
+    script_args = [
+        "--project",
+        path_text(args.project_root),
+        "--volume",
+        args.volume,
+        "--batch-size",
+        str(args.batch_size),
+    ]
+    add_values(script_args, "--chapters", args.chapters)
+    add_value(script_args, "--from-chapter", args.from_chapter)
+    add_value(script_args, "--to-chapter", args.to_chapter)
+    add_flag(script_args, args.dry_run, "--dry-run")
+    add_flag(script_args, args.force, "--force")
+    run_step("Create volume-summary batch", "create_volume_summary_batch.py", script_args)
+    return 0
+
+
+def command_create_bible_patch_batch(args: argparse.Namespace) -> int:
+    script_args = ["--project", path_text(args.project_root), "--source", args.source]
+    add_values(script_args, "--chapters", args.chapters)
+    add_value(script_args, "--volume", args.volume)
+    add_flag(script_args, args.dry_run, "--dry-run")
+    add_flag(script_args, args.force, "--force")
+    run_step("Create story-bible patch batch", "create_bible_patch_batch.py", script_args)
+    return 0
+
+
 def command_mark_done(args: argparse.Namespace) -> int:
     if not args.batch_id and not args.chunk_id:
         print("error: provide --batch-id or --chunk-id", file=sys.stderr)
@@ -266,6 +321,11 @@ def command_build_context_pack(args: argparse.Namespace) -> int:
     add_values(script_args, "--terms", args.terms)
     add_values(script_args, "--foreshadowing-ids", args.foreshadowing_ids)
     add_values(script_args, "--event-ids", args.event_ids)
+    add_flag(script_args, args.auto_select, "--auto-select")
+    add_value(script_args, "--selector-source", args.selector_source)
+    add_value(script_args, "--max-selectors", args.max_selectors)
+    add_flag(script_args, args.write_selector_report, "--write-selector-report")
+    add_value(script_args, "--selector-report-output", args.selector_report_output)
     add_value(script_args, "--format", args.format)
     add_value(script_args, "--output", args.output)
     add_flag(script_args, args.force, "--force")
@@ -286,6 +346,26 @@ def command_create_patch(args: argparse.Namespace) -> int:
     add_value(script_args, "--output", args.output)
     add_flag(script_args, args.force, "--force")
     run_step("Create pending patch", "create_patch.py", script_args)
+    return 0
+
+
+def command_create_quality_report(args: argparse.Namespace) -> int:
+    script_args = [
+        "--project",
+        path_text(args.project_root),
+        "--branch",
+        args.branch,
+        "--chapter",
+        args.chapter,
+        "--severity",
+        args.severity,
+    ]
+    add_value(script_args, "--draft", args.draft)
+    add_value(script_args, "--context-pack", args.context_pack)
+    add_value(script_args, "--output", args.output)
+    add_flag(script_args, args.template_only, "--template-only")
+    add_flag(script_args, args.force, "--force")
+    run_step("Create chapter quality report", "create_quality_report.py", script_args)
     return 0
 
 
@@ -345,6 +425,59 @@ def build_parser() -> argparse.ArgumentParser:
     create_batch.add_argument("--force", action="store_true")
     create_batch.set_defaults(func=command_create_batch)
 
+    import_status = subparsers.add_parser("import-status", help="Report import progress and next actions.")
+    project_arg(import_status)
+    import_status.add_argument("--format", choices=("markdown", "text", "yaml"), default="markdown")
+    import_status.add_argument("--output", type=Path)
+    import_status.add_argument("--show-pending", action="store_true")
+    import_status.add_argument("--show-failed", action="store_true")
+    import_status.add_argument("--show-ready", action="store_true")
+    import_status.add_argument("--show-next", action="store_true")
+    import_status.set_defaults(func=command_import_status)
+
+    chapter_card_batch = subparsers.add_parser(
+        "create-chapter-card-batch",
+        help="Create a chapter-card extraction batch from completed chunk cards.",
+    )
+    project_arg(chapter_card_batch)
+    chapter_card_batch.add_argument("--batch-size", type=int, default=5)
+    chapter_card_batch.add_argument("--chapter", default="")
+    chapter_card_batch.add_argument("--only-ready", action="store_true")
+    chapter_card_batch.add_argument("--retry-failed", action="store_true")
+    chapter_card_batch.add_argument("--dry-run", action="store_true")
+    chapter_card_batch.add_argument("--force", action="store_true")
+    chapter_card_batch.set_defaults(func=command_create_chapter_card_batch)
+
+    volume_summary_batch = subparsers.add_parser(
+        "create-volume-summary-batch",
+        help="Create a volume-summary batch from reviewed chapter cards.",
+    )
+    project_arg(volume_summary_batch)
+    volume_summary_batch.add_argument("--volume", default="1")
+    volume_summary_batch.add_argument("--chapters", nargs="*", default=[])
+    volume_summary_batch.add_argument("--from-chapter", default="")
+    volume_summary_batch.add_argument("--to-chapter", default="")
+    volume_summary_batch.add_argument("--batch-size", type=int, default=0)
+    volume_summary_batch.add_argument("--dry-run", action="store_true")
+    volume_summary_batch.add_argument("--force", action="store_true")
+    volume_summary_batch.set_defaults(func=command_create_volume_summary_batch)
+
+    bible_patch_batch = subparsers.add_parser(
+        "create-bible-patch-batch",
+        help="Create story-bible patch batch prompts without editing canon.",
+    )
+    project_arg(bible_patch_batch)
+    bible_patch_batch.add_argument(
+        "--source",
+        choices=("chunk_cards", "chapter_cards", "volume_summaries", "all"),
+        default="chapter_cards",
+    )
+    bible_patch_batch.add_argument("--chapters", nargs="*", default=[])
+    bible_patch_batch.add_argument("--volume", default="")
+    bible_patch_batch.add_argument("--dry-run", action="store_true")
+    bible_patch_batch.add_argument("--force", action="store_true")
+    bible_patch_batch.set_defaults(func=command_create_bible_patch_batch)
+
     mark_done = subparsers.add_parser("mark-done", help="Mark extraction batch or chunk state.")
     project_arg(mark_done)
     mark_done.add_argument("--batch-id")
@@ -403,6 +536,15 @@ def build_parser() -> argparse.ArgumentParser:
     context_pack.add_argument("--event-ids", nargs="*", default=[])
     context_pack.add_argument("--include-recent", type=int, default=3)
     context_pack.add_argument("--previous-ending-chars", type=int, default=1500)
+    context_pack.add_argument("--auto-select", action="store_true")
+    context_pack.add_argument(
+        "--selector-source",
+        choices=("indexes", "chapter_card", "recent", "all"),
+        default="all",
+    )
+    context_pack.add_argument("--max-selectors", type=int, default=20)
+    context_pack.add_argument("--write-selector-report", action="store_true")
+    context_pack.add_argument("--selector-report-output", type=Path)
     context_pack.add_argument("--format", choices=("markdown", "yaml"), default=None)
     context_pack.add_argument("--output", type=Path)
     context_pack.add_argument("--force", action="store_true")
@@ -416,6 +558,21 @@ def build_parser() -> argparse.ArgumentParser:
     create_patch.add_argument("--output", type=Path)
     create_patch.add_argument("--force", action="store_true")
     create_patch.set_defaults(func=command_create_patch)
+
+    quality_report = subparsers.add_parser(
+        "create-quality-report",
+        help="Create a chapter quality-report template.",
+    )
+    project_arg(quality_report)
+    quality_report.add_argument("--branch", default="main")
+    quality_report.add_argument("--chapter", required=True)
+    quality_report.add_argument("--draft", type=Path)
+    quality_report.add_argument("--context-pack", type=Path)
+    quality_report.add_argument("--output", type=Path)
+    quality_report.add_argument("--template-only", action="store_true")
+    quality_report.add_argument("--severity", choices=("serious", "medium", "light", "all"), default="all")
+    quality_report.add_argument("--force", action="store_true")
+    quality_report.set_defaults(func=command_create_quality_report)
 
     apply_patch = subparsers.add_parser("apply-patch", help="Dry-run or apply a pending patch.")
     project_arg(apply_patch)

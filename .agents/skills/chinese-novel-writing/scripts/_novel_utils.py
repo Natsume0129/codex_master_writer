@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from pathlib import Path
+import re
 
 
 def now_iso() -> str:
@@ -173,3 +174,54 @@ def safe_relative(path: Path, root: Path) -> str:
         return str(path.resolve().relative_to(root.resolve()))
     except ValueError:
         return str(path)
+
+
+def chapter_number(chapter: object) -> int | None:
+    match = re.search(r"(\d+)", str(chapter or ""))
+    return int(match.group(1)) if match else None
+
+
+def normalize_chapter_label(chapter: object, width: int = 3) -> str:
+    text = str(chapter or "").strip()
+    if not text:
+        return ""
+    number = chapter_number(text)
+    if number is not None:
+        return f"chapter_{number:0{width}d}"
+    if text.startswith("chapter_"):
+        return text
+    return "chapter_" + re.sub(r"[^A-Za-z0-9_\-\u4e00-\u9fff]+", "_", text).strip("_")
+
+
+def chapter_label_candidates(chapter: object) -> list[str]:
+    text = str(chapter or "").strip()
+    number = chapter_number(text)
+    candidates: list[str] = []
+    if number is not None:
+        candidates.extend([f"chapter_{number:03d}", f"chapter_{number:04d}"])
+    if text:
+        candidates.append(text)
+        if text.startswith("chapter_"):
+            try:
+                suffix = int(text.rsplit("_", 1)[1])
+                candidates.extend([f"chapter_{suffix:03d}", f"chapter_{suffix:04d}"])
+            except ValueError:
+                pass
+    return list(dict.fromkeys(candidates))
+
+
+def next_batch_id(batch_dir: Path, progress: dict[str, object] | None = None) -> str:
+    highest = 0
+    if progress:
+        batches = progress.get("batches", {})
+        if isinstance(batches, dict):
+            for batch_id in batches:
+                match = re.search(r"batch_(\d+)", str(batch_id))
+                if match:
+                    highest = max(highest, int(match.group(1)))
+    if batch_dir.exists():
+        for path in batch_dir.glob("batch_*_*.*"):
+            match = re.search(r"batch_(\d+)", path.name)
+            if match:
+                highest = max(highest, int(match.group(1)))
+    return f"batch_{highest + 1:04d}"

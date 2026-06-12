@@ -9,8 +9,20 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+from _novel_utils import chapter_label_candidates
+
 
 HEAD_LIMIT = 3000
+SCHEMA_VERSION = "0.4"
+AUTO_SELECTOR_CONFIG = (
+    ("characters", "characters", "indexes/character_index.yaml"),
+    ("locations", "locations", "indexes/location_index.yaml"),
+    ("items", "items", "indexes/item_index.yaml"),
+    ("organizations", "organizations", "indexes/organization_index.yaml"),
+    ("terms", "terms", "indexes/term_index.yaml"),
+    ("foreshadowing_ids", "foreshadowing", "indexes/foreshadowing_index.yaml"),
+    ("event_ids", "timeline events", "indexes/event_index.yaml"),
+)
 
 
 def yaml_quote(value: object) -> str:
@@ -117,6 +129,204 @@ def find_chapter_function_card(
         return "", "", "", rel
     text = read_head(path, 6000)
     return text, extract_yaml_scalar(text, "chapter_goal"), rel, ""
+
+
+def find_imported_chapter_card(project: Path, chapter: str) -> tuple[str, str]:
+    for label in chapter_label_candidates(chapter):
+        rel = f"extracted/chapter_cards/{label}.yaml"
+        path = project / rel
+        if path.exists():
+            return read_head(path, 6000), rel
+    return "", ""
+
+
+def clean_index_value(value: object) -> str:
+    text = str(value or "").strip().strip('"').strip("'")
+    if text in {"[]", "{}"}:
+        return ""
+    return text
+
+
+def useful_selector_term(value: object) -> bool:
+    text = clean_index_value(value)
+    if not text:
+        return False
+    if re.search(r"[\u4e00-\u9fff]", text):
+        return True
+    return len(text) >= 2
+
+
+def parse_index_entries(path: Path) -> list[dict[str, object]]:
+    if not path.exists():
+        return []
+    entries: list[dict[str, object]] = []
+    current: dict[str, object] | None = None
+    list_key = ""
+    for raw in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        stripped = raw.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if stripped.startswith("- "):
+            rest = stripped[2:].strip()
+            if rest.startswith("id:") or current is None:
+                if current:
+                    entries.append(current)
+                current = {"aliases": []}
+                list_key = ""
+                if ":" in rest:
+                    key, value = rest.split(":", 1)
+                    current[key.strip()] = clean_index_value(value)
+            elif list_key == "aliases":
+                aliases = current.setdefault("aliases", [])
+                if isinstance(aliases, list):
+                    aliases.append(clean_index_value(rest))
+            continue
+        if current is None or ":" not in stripped:
+            continue
+        key, value = stripped.split(":", 1)
+        key = key.strip()
+        value = value.strip()
+        if key == "aliases":
+            list_key = "aliases"
+            aliases = current.setdefault("aliases", [])
+            if isinstance(aliases, list) and value not in {"", "[]"}:
+                aliases.extend(clean_index_value(item) for item in value.strip("[]").split(",") if clean_index_value(item))
+            continue
+        list_key = ""
+        current[key] = clean_index_value(value)
+    if current:
+        entries.append(current)
+    return entries
+
+
+def entry_terms(entry: dict[str, object]) -> list[str]:
+    aliases = entry.get("aliases", [])
+    values: list[object] = [entry.get("id", ""), entry.get("name", "")]
+    if isinstance(aliases, list):
+        values.extend(aliases)
+    return list(dict.fromkeys(clean_index_value(value) for value in values if useful_selector_term(value)))
+
+
+def auto_selector_sources(
+    project: Path, args: argparse.Namespace, context: dict[str, str | list[str]]
+) -> tuple[str, list[str]]:
+    parts: list[str] = []
+    sources: list[str] = []
+    card_text = str(context.get("chapter_function_card", "") or "")
+    if card_text:
+        parts.append(card_text)
+        sources.append(str(context.get("chapter_function_card_source", "")))
+
+    if args.selector_source in {"recent", "all"}:
+        summaries = context.get("recent_chapter_summaries", [])
+        if isinstance(summaries, list):
+            parts.extend(str(item) for item in summaries)
+            if summaries:
+                sources.append(f"branches/{args.branch}/chapter_summaries")
+
+    if args.selector_source in {"chapter_card", "all"}:
+        imported_card, rel = find_imported_chapter_card(project, args.chapter)
+        if imported_card:
+            parts.append(imported_card)
+            sources.append(rel)
+
+    return "\n\n".join(parts), [source for source in sources if source]
+
+
+def merge_selector_values(manual: list[str], selected: list[str], limit: int) -> list[str]:
+    merged = list(dict.fromkeys(str(item) for item in manual if item))
+    if limit <= 0:
+        return merged
+    for item in selected:
+        if item in merged:
+            continue
+        if len(merged) >= max(limit, len(manual)):
+            break
+        merged.append(item)
+    return merged
+
+
+def run_auto_selectors(
+    project: Path, args: argparse.Namespace, context: dict[str, str | list[str]]
+) -> tuple[dict[str, list[str]], list[str], list[str]]:
+    source_text, source_files = auto_selector_sources(project, args, context)
+    lowered_source = source_text.lower()
+    selected: dict[str, list[str]] = {}
+    notes: list[str] = []
+    if not lowered_source.strip():
+        notes.append("auto_select: no selector source text found")
+
+    for attr, label, index_rel in AUTO_SELECTOR_CONFIG:
+        values: list[str] = []
+        matches: list[str] = []
+        entries = parse_index_entries(project / index_rel)
+        for entry in entries:
+            terms = entry_terms(entry)
+            matched_term = next((term for term in terms if term.lower() in lowered_source), "")
+            if not matched_term:
+                continue
+            selector = clean_index_value(entry.get("id") or entry.get("name") or matched_term)
+            if selector and selector not in values:
+                values.append(selector)
+                matches.append(f"{selector} <= {matched_term}")
+            if len(values) >= args.max_selectors:
+                break
+        selected[attr] = values
+        manual = getattr(args, attr)
+        setattr(args, attr, merge_selector_values(manual, values, args.max_selectors))
+        if values:
+            notes.append(f"auto_select {label}: {', '.join(values)}")
+        elif entries:
+            notes.append(f"auto_select {label}: no index match")
+        else:
+            notes.append(f"auto_select {label}: index empty or missing ({index_rel})")
+        if matches:
+            notes.extend(f"auto_select match {label}: {item}" for item in matches)
+    return selected, source_files, notes
+
+
+def write_selector_report(
+    project: Path,
+    args: argparse.Namespace,
+    selected: dict[str, list[str]],
+    source_files: list[str],
+    notes: list[str],
+) -> None:
+    output = (
+        args.selector_report_output.resolve()
+        if args.selector_report_output
+        else project / "context_packs" / "selector_report.md"
+    )
+    lines = [
+        "# Context Selector Report",
+        "",
+        f"Schema version: {SCHEMA_VERSION}",
+        "",
+        f"- generated_at: `{datetime.now(timezone.utc).isoformat(timespec='seconds')}`",
+        f"- selector_source: `{args.selector_source}`",
+        f"- max_selectors: `{args.max_selectors}`",
+        "",
+        "## Source Files",
+        "",
+    ]
+    if source_files:
+        lines.extend(f"- `{source}`" for source in source_files)
+    else:
+        lines.append("- None")
+    lines.extend(["", "## Selected", ""])
+    for attr, label, _ in AUTO_SELECTOR_CONFIG:
+        values = selected.get(attr, [])
+        lines.append(f"### {label}")
+        if values:
+            lines.extend(f"- `{value}`" for value in values)
+        else:
+            lines.append("- None")
+        lines.append("")
+    lines.extend(["## Notes", ""])
+    lines.extend(f"- {note}" for note in notes)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    print(f"Wrote selector report: {output}")
 
 
 def line_matches(path: Path, terms: list[str], context_lines: int = 2, limit: int = 8000) -> str:
@@ -330,6 +540,16 @@ def collect_context(args: argparse.Namespace) -> tuple[dict[str, str | list[str]
     else:
         retrieval_notes.append(f"chapter_function_card: loaded {card_source}")
 
+    context["auto_selector_sources"] = []
+    context["auto_selector_notes"] = []
+    if args.auto_select:
+        selected, source_files, auto_notes = run_auto_selectors(project, args, context)
+        context["auto_selector_sources"] = source_files
+        context["auto_selector_notes"] = auto_notes
+        retrieval_notes.extend(auto_notes)
+        if args.write_selector_report:
+            write_selector_report(project, args, selected, source_files, auto_notes)
+
     context["characters"] = collect_named_section(
         project,
         "characters",
@@ -399,9 +619,11 @@ def render_list_yaml(lines: list[str], values: list[str], indent: str) -> None:
 def render_yaml(args: argparse.Namespace, context: dict[str, str | list[str]], missing: list[str]) -> str:
     summaries = context.get("recent_chapter_summaries", [])
     retrieval_notes = context.get("retrieval_notes", [])
+    auto_selector_sources = context.get("auto_selector_sources", [])
+    auto_selector_notes = context.get("auto_selector_notes", [])
     lines = [
         "context_pack:",
-        '  schema_version: "0.3.1"',
+        f'  schema_version: "{SCHEMA_VERSION}"',
         "  generated_by: \"chinese-novel-writing/scripts/build_context_pack.py\"",
         f"  generated_at: {yaml_quote(datetime.now(timezone.utc).isoformat(timespec='seconds'))}",
         "  task:",
@@ -446,6 +668,28 @@ def render_yaml(args: argparse.Namespace, context: dict[str, str | list[str]], m
             f"    open_questions: {yaml_quote(context.get('open_questions', ''))}",
             "  hard_constraints:",
             f"    must_not_change: {yaml_quote(context.get('hard_constraints', ''))}",
+            "  auto_selection:",
+            f"    enabled: {'true' if args.auto_select else 'false'}",
+            f"    selector_source: {yaml_quote(args.selector_source)}",
+            f"    max_selectors: {args.max_selectors}",
+            "    source_files:",
+        ]
+    )
+    if isinstance(auto_selector_sources, list):
+        render_list_yaml(lines, auto_selector_sources, "      ")
+    else:
+        lines.append("      []")
+    lines.extend(
+        [
+            "    notes:",
+        ]
+    )
+    if isinstance(auto_selector_notes, list):
+        render_list_yaml(lines, auto_selector_notes, "      ")
+    else:
+        lines.append("      []")
+    lines.extend(
+        [
             "  retrieval_notes:",
         ]
     )
@@ -461,6 +705,8 @@ def render_yaml(args: argparse.Namespace, context: dict[str, str | list[str]], m
 def render_markdown(args: argparse.Namespace, context: dict[str, str | list[str]], missing: list[str]) -> str:
     summaries = context.get("recent_chapter_summaries", [])
     retrieval_notes = context.get("retrieval_notes", [])
+    auto_selector_sources = context.get("auto_selector_sources", [])
+    auto_selector_notes = context.get("auto_selector_notes", [])
     summary_text = (
         "\n\n".join(summaries)
         if isinstance(summaries, list) and summaries
@@ -471,12 +717,22 @@ def render_markdown(args: argparse.Namespace, context: dict[str, str | list[str]
         if isinstance(retrieval_notes, list) and retrieval_notes
         else "- None"
     )
+    auto_sources_text = (
+        "\n".join(f"- `{item}`" for item in auto_selector_sources)
+        if isinstance(auto_selector_sources, list) and auto_selector_sources
+        else "- None"
+    )
+    auto_notes_text = (
+        "\n".join(f"- {item}" for item in auto_selector_notes)
+        if isinstance(auto_selector_notes, list) and auto_selector_notes
+        else "- None"
+    )
     missing_text = "\n".join(f"- {item}" for item in missing) if missing else "- None"
     return f"""# Context Pack
 
 Generated at: {datetime.now(timezone.utc).isoformat(timespec="seconds")}
 
-Schema version: 0.3.1
+Schema version: {SCHEMA_VERSION}
 
 ## Task
 
@@ -592,6 +848,20 @@ Source: `{context.get("previous_chapter_ending_source", "")}`
 
 {context.get("hard_constraints", "")}
 
+## Auto Selection
+
+- enabled: {str(args.auto_select).lower()}
+- selector_source: {args.selector_source}
+- max_selectors: {args.max_selectors}
+
+### Auto Selector Sources
+
+{auto_sources_text}
+
+### Auto Selector Notes
+
+{auto_notes_text}
+
 ## Retrieval Notes
 
 {retrieval_text}
@@ -619,6 +889,16 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--event-ids", nargs="*", default=[], help="Timeline event ids to include.")
     parser.add_argument("--include-recent", type=int, default=3, help="Recent chapter summaries to include.")
     parser.add_argument("--previous-ending-chars", type=int, default=1500, help="Characters from previous ending.")
+    parser.add_argument("--auto-select", action="store_true", help="Auto-select entity and timeline selectors from indexes.")
+    parser.add_argument(
+        "--selector-source",
+        choices=("indexes", "chapter_card", "recent", "all"),
+        default="all",
+        help="Hint sources for auto-select. Index files are always the selector target.",
+    )
+    parser.add_argument("--max-selectors", type=int, default=20, help="Maximum selectors per category after manual selectors.")
+    parser.add_argument("--write-selector-report", action="store_true", help="Write a selector report next to context packs.")
+    parser.add_argument("--selector-report-output", type=Path, help="Optional selector report output path.")
     parser.add_argument("--format", choices=("markdown", "yaml"), default=None, help="Output format.")
     parser.add_argument("--output", type=Path, help="Output file. Defaults to context_packs/latest_context_pack.md.")
     parser.add_argument("--force", action="store_true", help="Overwrite existing output.")

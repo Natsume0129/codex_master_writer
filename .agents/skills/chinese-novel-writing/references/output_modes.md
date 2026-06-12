@@ -1,6 +1,6 @@
 # Output Modes
 
-Use `output_mode` to control response size and workflow detail. In v0.3.1, `output_mode` is the canonical field in `project_config.yaml` and context pack metadata. `preferred_output_mode` is an older requirements name and should not be introduced into new project files.
+Use `output_mode` to control response size and workflow detail. In v0.4, `output_mode` is the canonical field in `project_config.yaml` and context pack metadata. `preferred_output_mode` is an older requirements name and should not be introduced into new project files.
 
 ## Modes
 

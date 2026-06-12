@@ -70,7 +70,7 @@ def main(argv: list[str] | None = None) -> int:
         for chapter_id, chunk_ids in sorted(chapter_chunks.items())
     }
     data: dict[str, object] = {
-        "schema_version": "0.3.1",
+        "schema_version": "0.4",
         "project": {
             "name": project.name,
             "source_manifest": safe_relative(manifest, project),

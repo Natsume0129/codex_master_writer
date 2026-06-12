@@ -64,19 +64,24 @@ Load only the reference needed for the current task:
 
 ## Script Usage
 
-Use `scripts/novel_project.py` as the preferred v0.3.1 unified CLI for deterministic file work. Use lower-level scripts only when fine-grained control is needed.
+Use `scripts/novel_project.py` as the preferred v0.4 unified CLI for deterministic file work. Use lower-level scripts only when fine-grained control is needed.
 
-- `scripts/novel_project.py` exposes `init`, `split-import`, `init-progress`, `create-batch`, `mark-done`, `build-indexes`, `new-branch`, `create-function-card`, `build-context-pack`, `create-patch`, `apply-patch`, and `validate`.
+- `scripts/novel_project.py` exposes `init`, `split-import`, `init-progress`, `create-batch`, `import-status`, `create-chapter-card-batch`, `create-volume-summary-batch`, `create-bible-patch-batch`, `mark-done`, `build-indexes`, `new-branch`, `create-function-card`, `build-context-pack`, `create-quality-report`, `create-patch`, `apply-patch`, and `validate`.
 - `scripts/init_project.py` creates a project from templates.
 - `scripts/split_chapters.py` splits imported text and writes an import manifest.
 - `scripts/split_chunks.py` splits chapter files into overlapping chunks and writes a chunk manifest.
 - `scripts/init_extraction_progress.py` initializes `imports/extraction_progress.yaml`.
 - `scripts/create_extraction_batch.py` creates the next small extraction batch prompt and metadata file.
+- `scripts/import_status.py` reports import closure status and next deterministic actions.
+- `scripts/create_chapter_card_batch.py` creates chapter-card prompt batches from completed chunk cards.
+- `scripts/create_volume_summary_batch.py` creates volume-summary prompt batches from chapter cards.
+- `scripts/create_bible_patch_batch.py` creates story-bible patch prompt batches and pending patch skeletons without editing canon.
 - `scripts/mark_extraction_done.py` marks chunks or batches as queued, processing, done, failed, or skipped.
 - `scripts/build_indexes.py` rebuilds lightweight navigation indexes without external services.
 - `scripts/create_branch.py` creates isolated alternate-plot branches.
 - `scripts/create_chapter_function_card.py` creates branch-local chapter function cards.
-- `scripts/build_context_pack.py` creates a context-pack skeleton without reading full raw text.
+- `scripts/build_context_pack.py` creates a context-pack skeleton without reading full raw text; `--auto-select` can fill selectors from indexes and chapter/recent hints.
+- `scripts/create_quality_report.py` creates a review template under `branches/<branch>/reviews/`.
 - `scripts/create_patch.py` creates pending post-write update patches.
 - `scripts/apply_patch.py` dry-runs and then applies limited safe patch updates after confirmation.
 - `scripts/validate_project.py` checks project structure.

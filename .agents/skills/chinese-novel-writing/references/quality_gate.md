@@ -42,3 +42,30 @@ Use:
 ## Full Review Output
 
 When the user asks for detailed review, include evidence, file/source references, impact, and recommended fix. Do not silently rewrite the story unless revision is requested.
+
+## v0.4 Quality Report File
+
+Use `create-quality-report` when a draft or outline needs a durable review artifact:
+
+```bash
+python scripts/novel_project.py create-quality-report --project-root ./projects/my-novel --branch main --chapter 12 --template-only --force
+```
+
+Default output:
+
+```text
+branches/<branch>/reviews/chapter_XXX_quality_report.md
+```
+
+The report includes:
+
+- `schema_version: 0.4`
+- summary
+- serious, medium, and light issue tables
+- suggested fixes
+- patch candidates
+- `requires_user_confirmation`
+- evidence table
+- next actions
+
+The script creates a template only. Codex/model review must fill findings with evidence from the draft and context pack. Major plot fixes still require explicit user confirmation before patch application.

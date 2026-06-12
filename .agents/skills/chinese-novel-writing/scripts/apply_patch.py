@@ -156,7 +156,7 @@ def main(argv: list[str] | None = None) -> int:
     for path, _, items in changed:
         print(f"- update {path.relative_to(project)} ({len(items)} items)")
     for field in review_needed:
-            print(f"- review_needed: updates.{field} is not auto-merged in v0.3.1")
+            print(f"- review_needed: updates.{field} is not auto-merged in v0.4")
     if not changed:
         print("- no safely mergeable updates found")
     if not args.confirm:

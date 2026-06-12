@@ -75,6 +75,24 @@ Long chapters should be split further before Codex analysis. A chunk card should
 - mentioned characters, places, items, organizations, terms
 - possible facts with `source`, `status`, and `confidence`
 
+## v0.4 Import Closure
+
+Use `import-status` at any point to summarize chunk, batch, chapter-card, volume-summary, bible-patch, and conflict status:
+
+```bash
+python scripts/novel_project.py import-status --project-root ./projects/my-novel
+```
+
+After chunk cards are done, close the import in deterministic prompt batches:
+
+```bash
+python scripts/novel_project.py create-chapter-card-batch --project-root ./projects/my-novel --batch-size 5 --force
+python scripts/novel_project.py create-volume-summary-batch --project-root ./projects/my-novel --volume 1 --force
+python scripts/novel_project.py create-bible-patch-batch --project-root ./projects/my-novel --source all --force
+```
+
+These scripts create prompts and metadata only. They do not perform AI extraction, do not read `raw_text/full_text.txt`, and do not directly edit `canon/`. Story-bible updates are staged as pending patch skeletons under `pending_updates/`.
+
 ## Source Tracking
 
 Facts extracted from text must keep source references such as `chapter_001`, `chapter_001_chunk_002`, or a user-provided statement. Do not label interpretation as confirmed unless the source directly supports it.

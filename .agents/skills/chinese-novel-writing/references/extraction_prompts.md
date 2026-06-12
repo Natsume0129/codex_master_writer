@@ -72,12 +72,21 @@ Do not reread unrelated chapters. Combine duplicate facts by merging source list
 Keep uncertain facts uncertain. Mark chapter-level interpretations as inferred unless directly supported.
 ```
 
+For v0.4, prefer creating these prompts with:
+
+```bash
+python scripts/novel_project.py create-chapter-card-batch --project-root ./projects/my-novel --batch-size 5 --force
+```
+
+The generated batch lists source chunk cards. Read only those listed chunk cards; do not read full raw text or unrelated raw chapters.
+
 Schema:
 
 ```yaml
+schema_version: "0.4"
 chapter_id: ""
 title: ""
-source_files: []
+source_chunk_cards: []
 summary: ""
 chapter_function: ""
 major_events: []
@@ -111,9 +120,16 @@ Use chinese-novel-writing. Merge the chapter_cards for one volume into a volume_
 Summarize plot progress and arcs; do not add unsourced canon. Preserve unresolved questions.
 ```
 
+For v0.4, prefer creating the prompt with:
+
+```bash
+python scripts/novel_project.py create-volume-summary-batch --project-root ./projects/my-novel --volume 1 --force
+```
+
 Schema:
 
 ```yaml
+schema_version: "0.4"
 volume_id: ""
 chapters: []
 summary: ""
@@ -139,6 +155,14 @@ Do not edit canon files directly. Produce pending_updates entries first.
 Do not promote uncertain to confirmed automatically. Merge duplicate facts by source.
 Send conflicts to continuity_log or pending_updates potential_conflicts.
 ```
+
+For v0.4, prefer creating the prompt and patch skeleton with:
+
+```bash
+python scripts/novel_project.py create-bible-patch-batch --project-root ./projects/my-novel --source all --force
+```
+
+The script writes `batch_XXXX_story_bible_patches.md/.yaml` and `pending_updates/import_bible_patch_XXXX.yaml`. Fill the patch candidate after reviewing only the listed source files.
 
 Rules:
 
