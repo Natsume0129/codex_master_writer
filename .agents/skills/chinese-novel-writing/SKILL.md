@@ -64,9 +64,9 @@ Load only the reference needed for the current task:
 
 ## Script Usage
 
-Use `scripts/novel_project.py` as the preferred v0.5 unified CLI for deterministic file work. Use lower-level scripts only when fine-grained control is needed.
+Use `scripts/novel_project.py` as the preferred v0.5.1 unified CLI for deterministic file work. Use lower-level scripts only when fine-grained control is needed.
 
-- `scripts/novel_project.py` exposes `init`, `split-import`, `init-progress`, `create-batch`, `import-status`, `create-chapter-card-batch`, `create-volume-summary-batch`, `create-bible-patch-batch`, `mark-done`, `build-indexes`, `new-branch`, `create-function-card`, `build-context-pack`, `create-draft-prompt`, `create-quality-report`, `create-patch`, `create-patch-review`, `apply-patch`, and `validate`.
+- `scripts/novel_project.py` exposes `init`, `split-import`, `init-progress`, `create-batch`, `import-status`, `create-chapter-card-batch`, `create-volume-summary-batch`, `create-bible-patch-batch`, `mark-done`, `build-indexes`, `new-branch`, `create-function-card`, `build-context-pack`, `create-draft-prompt`, `create-quality-report`, `create-patch`, `review-patch`, `create-patch-review`, `apply-patch`, and `validate`.
 - `scripts/init_project.py` creates a project from templates.
 - `scripts/split_chapters.py` splits imported text and writes an import manifest.
 - `scripts/split_chunks.py` splits chapter files into overlapping chunks and writes a chunk manifest.
@@ -81,10 +81,10 @@ Use `scripts/novel_project.py` as the preferred v0.5 unified CLI for determinist
 - `scripts/create_branch.py` creates isolated alternate-plot branches.
 - `scripts/create_chapter_function_card.py` creates branch-local v0.5 chapter function cards.
 - `scripts/build_context_pack.py` creates a context-pack skeleton without reading full raw text; `--auto-select` can fill selectors from indexes and chapter/recent hints.
-- `scripts/create_draft_prompt.py` creates a drafting prompt from the context pack and chapter function card without writing prose.
+- `scripts/create_draft_prompt.py` creates a drafting prompt from the context pack and chapter function card without writing prose; `--target-length` and `--style-strictness` are prompt controls only.
 - `scripts/create_quality_report.py` creates a review template and can create a review prompt under `branches/<branch>/reviews/`.
 - `scripts/create_patch.py` creates pending post-write update patches.
-- `scripts/create_patch_review.py` creates human-readable patch review reports before patch apply.
+- `scripts/create_patch_review.py` creates human-readable patch review reports before patch apply. Prefer `review-patch`; `create-patch-review` remains compatible.
 - `scripts/apply_patch.py` dry-runs and then applies limited safe patch updates after confirmation.
 - `scripts/validate_project.py` checks project structure.
 

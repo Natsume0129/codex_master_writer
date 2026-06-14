@@ -61,6 +61,8 @@ branch: {args.branch}
 chapter: {args.chapter}
 chapter_label: {args.chapter_label}
 output_mode: {args.output_mode}
+target_length: {args.target_length}
+style_strictness: {args.style_strictness}
 context_pack: {context_rel}
 context_pack_status: {status(context_pack)}
 chapter_function_card: {card_rel}
@@ -82,6 +84,8 @@ Draft the chapter for the active branch using only the task-relevant context pac
 ## Writing Controls
 
 - Treat `chapter_goal` as the local chapter objective.
+- Treat `target_length` as a target character count, not a hard cutoff.
+- Interpret `style_strictness` as: `low` allows some expressive freedom; `medium` follows the project style and context pack; `high` strictly follows the context pack, function card, and style guide without expanding unconfirmed content.
 - Use `chapter_function.type`, `purpose`, and `reader_promise` to decide why the chapter exists.
 - Follow `scene_beats` as the chapter's beat-level control surface.
 - Preserve `main_conflict`, `emotional_arc`, `continuity_constraints`, `hard_constraints`, and `forbidden`.
@@ -119,6 +123,13 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--output", type=Path, help="Prompt output path.")
     parser.add_argument("--draft-output", type=Path, help="Suggested draft output path written into the prompt.")
     parser.add_argument("--output-mode", default="draft_with_notes")
+    parser.add_argument("--target-length", default="", help="Target character count written into the prompt.")
+    parser.add_argument(
+        "--style-strictness",
+        choices=("low", "medium", "high"),
+        default="medium",
+        help="How strictly the draft should follow context, function card, and style guide.",
+    )
     parser.add_argument("--force", action="store_true")
     return parser.parse_args(argv)
 

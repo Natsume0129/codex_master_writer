@@ -350,6 +350,8 @@ def command_create_draft_prompt(args: argparse.Namespace) -> int:
     add_value(script_args, "--function-card", args.function_card)
     add_value(script_args, "--output", args.output)
     add_value(script_args, "--draft-output", args.draft_output)
+    add_value(script_args, "--target-length", args.target_length)
+    add_value(script_args, "--style-strictness", args.style_strictness)
     add_flag(script_args, args.force, "--force")
     run_step("Create chapter draft prompt", "create_draft_prompt.py", script_args)
     return 0
@@ -603,6 +605,12 @@ def build_parser() -> argparse.ArgumentParser:
     draft_prompt.add_argument("--output", type=Path)
     draft_prompt.add_argument("--draft-output", type=Path)
     draft_prompt.add_argument("--output-mode", default="draft_with_notes")
+    draft_prompt.add_argument("--target-length", default="")
+    draft_prompt.add_argument(
+        "--style-strictness",
+        choices=("low", "medium", "high"),
+        default="medium",
+    )
     draft_prompt.add_argument("--force", action="store_true")
     draft_prompt.set_defaults(func=command_create_draft_prompt)
 
@@ -624,6 +632,16 @@ def build_parser() -> argparse.ArgumentParser:
     patch_review.add_argument("--output", type=Path)
     patch_review.add_argument("--force", action="store_true")
     patch_review.set_defaults(func=command_create_patch_review)
+
+    review_patch = subparsers.add_parser(
+        "review-patch",
+        help="Alias for create-patch-review; create a human-readable pending patch report.",
+    )
+    project_arg(review_patch)
+    review_patch.add_argument("--patch", required=True, type=Path)
+    review_patch.add_argument("--output", type=Path)
+    review_patch.add_argument("--force", action="store_true")
+    review_patch.set_defaults(func=command_create_patch_review)
 
     quality_report = subparsers.add_parser(
         "create-quality-report",

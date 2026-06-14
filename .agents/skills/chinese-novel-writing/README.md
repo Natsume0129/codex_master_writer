@@ -1,6 +1,6 @@
 # chinese-novel-writing
 
-`chinese-novel-writing` 是一个中文小说项目工作流 skill，用于从零创作、导入续写、资料库维护、context pack 构建、剧情分支改写和一致性检查。v0.4 保留当前实际路径：
+`chinese-novel-writing` 是一个中文小说项目工作流 skill，用于从零创作、导入续写、资料库维护、context pack 构建、剧情分支改写和一致性检查。当前实现保留实际路径：
 
 ```text
 .agents/skills/chinese-novel-writing/
@@ -40,17 +40,35 @@ v0.5 adds writing-quality workflow artifacts while keeping scripts deterministic
 - `create-function-card` now writes a `schema_version: "0.5"` chapter function card with chapter function, scene beats, emotional arc, continuity constraints, forbidden changes, and user-confirmation fields.
 - `create-draft-prompt` writes `branches/<branch>/draft_prompts/chapter_XXX_draft_prompt.md` from a context pack and chapter function card. It does not write prose.
 - `create-quality-report --with-prompt` writes the existing quality report template plus a review prompt. `--prompt-only` writes only the review prompt.
-- `create-patch-review` writes a human-readable report for a pending patch, separating safe updates, review-only updates, required confirmations, and potential conflicts.
+- `review-patch` writes a human-readable report for a pending patch, separating safe updates, review-only updates, required confirmations, and potential conflicts. `create-patch-review` remains as a compatibility command.
+
+## v0.5.1 Polish
+
+v0.5.1 does not introduce a new schema version.
+
+- `review-patch` is the preferred patch-review command; `create-patch-review` remains compatible.
+- `create-draft-prompt` accepts `--target-length` and `--style-strictness low|medium|high`.
+- `validate` suggests `create-draft-prompt` when a context pack and chapter function cards exist but no draft prompt has been generated.
+
+Manual v0.5.1 verification:
+
+```bash
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py --help
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-draft-prompt --project-root ./tmp/demo_novel --branch main --chapter 1 --context-pack context_packs/latest_context_pack.md --target-length 3000 --style-strictness high --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py review-patch --project-root ./tmp/demo_novel --patch pending_updates/chapter_001_patch.yaml --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-patch-review --project-root ./tmp/demo_novel --patch pending_updates/chapter_001_patch.yaml --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py validate --project-root ./tmp/demo_novel
+```
 
 Minimal v0.5 writing-quality flow:
 
 ```bash
 python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-function-card --project-root ./tmp/demo_novel --branch main --chapter 1 --goal "测试章节功能卡" --force
 python .agents/skills/chinese-novel-writing/scripts/novel_project.py build-context-pack --project-root ./tmp/demo_novel --branch main --task continue_story --chapter 1 --include-recent 3 --force
-python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-draft-prompt --project-root ./tmp/demo_novel --branch main --chapter 1 --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-draft-prompt --project-root ./tmp/demo_novel --branch main --chapter 1 --target-length 3000 --style-strictness high --force
 python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-quality-report --project-root ./tmp/demo_novel --branch main --chapter 1 --with-prompt --force
 python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-patch --project-root ./tmp/demo_novel --branch main --chapter 1 --force
-python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-patch-review --project-root ./tmp/demo_novel --patch ./tmp/demo_novel/pending_updates/chapter_001_patch.yaml --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py review-patch --project-root ./tmp/demo_novel --patch ./tmp/demo_novel/pending_updates/chapter_001_patch.yaml --force
 ```
 
 Project-relative quality report paths:
@@ -59,7 +77,7 @@ Project-relative quality report paths:
 python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-quality-report --project-root ./tmp/demo_novel --branch main --chapter 1 --draft branches/main/drafts/chapter_001.md --context-pack context_packs/latest_context_pack.md --force
 ```
 
-Minimal v0.4 verification after the old happy path:
+Legacy import-closure verification after the old happy path:
 
 ```bash
 python .agents/skills/chinese-novel-writing/scripts/novel_project.py import-status --project-root ./tmp/demo_novel
@@ -77,7 +95,7 @@ python .agents/skills/chinese-novel-writing/scripts/novel_project.py validate --
 - 不承诺“完美处理 200 万字小说”；它提供长文本分层导入和任务级 context pack 架构。
 - 不会在写作后直接覆盖 `canon/`、`timeline.yaml`、`foreshadowing.yaml` 等核心资料库。
 
-## v0.4 推荐工作流
+## 推荐工作流
 
 1. `init` 创建项目。
 2. `split-import` 切章节、切 chunk、初始化 progress、创建第一批 batch。
@@ -152,7 +170,7 @@ python .agents/skills/chinese-novel-writing/scripts/novel_project.py apply-patch
 python .agents/skills/chinese-novel-writing/scripts/novel_project.py apply-patch --project-root ./tmp/demo_novel --patch ./tmp/demo_novel/pending_updates/chapter_001_patch.yaml --confirm
 ```
 
-如果 `requires_user_confirmation` 非空，必须在用户明确同意后加 `--confirm-major`。人物、关系、世界观、地点、组织、物品、术语等复杂更新在 v0.4 仍是 review-only。
+如果 `requires_user_confirmation` 非空，必须在用户明确同意后加 `--confirm-major`。人物、关系、世界观、地点、组织、物品、术语等复杂更新在当前 helper 中仍是 review-only。
 
 ## Validate
 
@@ -210,8 +228,9 @@ python .agents/skills/chinese-novel-writing/scripts/novel_project.py validate --
 
 ## Schema 取舍
 
-- v0.5 uses `schema_version: "0.5"` for chapter function cards, draft prompts, quality review prompts, and patch review reports. Existing v0.4 project skeleton files remain valid unless a future migration explicitly changes them.
-- v0.4 使用 `schema_version: "0.4"` 标记新模板和新生成文件。
+- v0.5.1 does not add a new schema version.
+- v0.5 uses `schema_version: "0.5"` for chapter function cards, draft prompts, quality review prompts, and patch review reports.
+- The project skeleton remains `schema_version: "0.4"` and is still valid.
 - `output_mode` 是 canonical 字段；旧需求里的 `preferred_output_mode` 不是当前实现主字段。
 - 重要事实继续使用 `source` / `status` / `confidence`。
 - `foreshadowing.status` 这类字段表示生命周期状态，不等同于事实证据状态。

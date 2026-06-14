@@ -438,6 +438,15 @@ def check_quality_workflow_suggestions(project: Path, suggestions: list[str]) ->
 
     branches_dir = project / "branches"
     if branches_dir.exists():
+        if latest_context.exists():
+            for branch_dir in sorted(item for item in branches_dir.iterdir() if item.is_dir()):
+                has_function_cards = any((branch_dir / "chapter_function_cards").glob("*.yaml"))
+                has_draft_prompts = any((branch_dir / "draft_prompts").glob("*_draft_prompt.md"))
+                if has_function_cards and not has_draft_prompts:
+                    suggestions.append(
+                        "context pack and chapter function cards exist; run create-draft-prompt before drafting"
+                    )
+                    break
         for branch_dir in sorted(item for item in branches_dir.iterdir() if item.is_dir()):
             drafts_dir = branch_dir / "drafts"
             reviews_dir = branch_dir / "reviews"
@@ -452,7 +461,7 @@ def check_quality_workflow_suggestions(project: Path, suggestions: list[str]) ->
 
     pending_patches = [path for path in (project / "pending_updates").glob("*.yaml")]
     if pending_patches:
-        suggestions.append("pending patches exist; run create-patch-review, then apply-patch without --confirm for a dry run")
+        suggestions.append("pending patches exist; run review-patch, then apply-patch without --confirm for a dry run")
 
 
 def validate_project(project: Path) -> tuple[list[str], list[str], list[str]]:

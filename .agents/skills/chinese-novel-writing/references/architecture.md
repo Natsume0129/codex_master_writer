@@ -18,7 +18,7 @@ A novel project is a file-based knowledge base:
 
 ## Project Directory
 
-The standard v0.4 project template is under `templates/novel_project/`. Scripts copy this whole directory when initializing a new novel project. This is intentionally kept instead of the older `assets/templates/` single-file layout because the project is directory-shaped and easier to validate as a complete empty skeleton. The template is intentionally empty of real story content.
+The standard project template is under `templates/novel_project/`. Its structural skeleton still uses the v0.4 schema, while v0.5 writing-quality artifacts use their own v0.5 markers. Scripts copy this whole directory when initializing a new novel project. This is intentionally kept instead of the older `assets/templates/` single-file layout because the project is directory-shaped and easier to validate as a complete empty skeleton. The template is intentionally empty of real story content.
 
 Important directories:
 

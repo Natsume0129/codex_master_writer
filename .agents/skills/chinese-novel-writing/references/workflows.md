@@ -48,11 +48,11 @@ Steps:
 1. Confirm active branch from `project_config.yaml` or user request.
 2. If chapter goal is missing, create a chapter function card before writing with `scripts/novel_project.py create-function-card`.
 3. Build context pack with `scripts/novel_project.py build-context-pack`; use `--auto-select` when selectors are missing or stale.
-4. Generate a deterministic writing prompt with `scripts/novel_project.py create-draft-prompt`.
+4. Generate a deterministic writing prompt with `scripts/novel_project.py create-draft-prompt`; pass `--target-length` or `--style-strictness` when the user gives writing-control preferences.
 5. Draft according to the generated prompt, style guide, current outline, recent summaries, and constraints.
 6. Run quality gate and create a durable report plus review prompt with `scripts/novel_project.py create-quality-report --with-prompt` when a review file is needed.
 7. Generate post-write patch with `scripts/novel_project.py create-patch` and fill candidate updates.
-8. Create a patch review report with `scripts/novel_project.py create-patch-review`.
+8. Create a patch review report with `scripts/novel_project.py review-patch`.
 9. Dry-run `scripts/novel_project.py apply-patch` if the user wants to apply safe post-write updates.
 
 Output: draft according to output mode, short quality summary, and patch summary.
@@ -94,7 +94,7 @@ Input: chapter number, chapter goal, outline, or "write this chapter".
 Steps:
 
 1. Require branch, chapter function card or chapter goal, recent summaries or previous ending, relevant facts, foreshadowing, style guide, and hard constraints.
-2. Build the context pack and create a draft prompt.
+2. Build the context pack and create a draft prompt, including target length or style strictness when provided.
 3. Draft only within the active branch.
 4. Do not introduce major irreversible plot events without confirmation.
 5. Run quality gate with a review prompt when the report should persist.

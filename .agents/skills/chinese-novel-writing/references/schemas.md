@@ -8,6 +8,7 @@ These schemas define the expected shape of project files. YAML examples are temp
 - New project templates live under `templates/novel_project/`; this is intentional and replaces the older single-file `assets/templates/` idea.
 - Existing structural project files from v0.4 remain valid.
 - New v0.5 writing-control artifacts use `schema_version: "0.5"`: chapter function cards, draft prompts, quality review prompts, and patch review reports.
+- v0.5.1 does not introduce `schema_version: "0.5.1"`.
 - New v0.4 import and patch skeleton formats still use `schema_version: "0.4"` unless that specific format is migrated.
 - `output_mode` is the canonical output field. `preferred_output_mode` is an older requirements name and is not the current implementation field.
 - Important facts use `source`, `status`, and `confidence`. Do not reintroduce `fact_status`.
@@ -495,6 +496,8 @@ Required metadata:
 - `chapter`
 - `chapter_label`
 - `output_mode`
+- `target_length`
+- `style_strictness`
 - `context_pack`
 - `context_pack_status`
 - `chapter_function_card`
