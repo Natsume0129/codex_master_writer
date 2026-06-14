@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
-BRANCH_DIRS = ["chapter_summaries", "chapter_function_cards", "drafts", "reviews"]
+BRANCH_DIRS = ["chapter_summaries", "chapter_function_cards", "drafts", "reviews", "rewrite"]
 BRANCH_TEXT_FILES = {
     "outline.md": "# Branch Outline\n\n剧情重构分支大纲，基于 divergence_analysis 重新生成。\n",
     "volume_outline.md": "# Branch Volume Outline\n\n待填写。\n",
@@ -103,6 +103,129 @@ def render_divergence(branch_name: str, divergence: str, inherit: str, base_chap
     )
 
 
+def render_rewrite_plot_node_map(branch_name: str) -> str:
+    return "\n".join(
+        [
+            'schema_version: "0.6"',
+            'project: ""',
+            f"branch: {yaml_quote(branch_name)}",
+            'base_branch: "main"',
+            "source_scope: []",
+            f"generated_at: {yaml_quote(datetime.now(timezone.utc).isoformat(timespec='seconds'))}",
+            "missing_sections: []",
+            "plot_nodes: []",
+            'notes: "Branch-local rewrite skeleton. Fill with create-plot-node-map or model-reviewed artifact updates."',
+            "",
+        ]
+    )
+
+
+def render_rewrite_divergence_analysis(branch_name: str, divergence: str, base_chapter: str) -> str:
+    return "\n".join(
+        [
+            'schema_version: "0.6"',
+            'project: ""',
+            f"branch: {yaml_quote(branch_name)}",
+            'base_branch: "main"',
+            'divergence_id: ""',
+            f"divergence_title: {yaml_quote(divergence or branch_name)}",
+            f"base_chapter: {yaml_quote(base_chapter)}",
+            'original_fact: ""',
+            f"changed_fact: {yaml_quote(divergence)}",
+            'divergence_time: ""',
+            'impact_radius: "uncertain"',
+            'impact_reason: ""',
+            "preserved_facts: []",
+            "can_change: []",
+            "invalidated_plot_nodes: []",
+            "preserved_plot_nodes: []",
+            "inverted_plot_nodes: []",
+            "replacement_plot_nodes: []",
+            "relationship_impacts: []",
+            "faction_impacts: []",
+            "timeline_impacts: []",
+            "foreshadowing_impacts: []",
+            "world_rule_impacts: []",
+            "new_conflicts: []",
+            "unresolved_risks: []",
+            "requires_user_decision: []",
+            "source: []",
+            'status: "inferred"',
+            'confidence: "low"',
+            "missing_sections: []",
+            "",
+        ]
+    )
+
+
+def render_rewrite_replacement_routes(branch_name: str) -> str:
+    return "\n".join(
+        [
+            'schema_version: "0.6"',
+            'project: ""',
+            f"branch: {yaml_quote(branch_name)}",
+            'divergence_id: ""',
+            "routes: []",
+            'status: "draft"',
+            'confidence: "medium"',
+            "",
+        ]
+    )
+
+
+def render_rewrite_plan_prompt(branch_name: str) -> str:
+    return "\n".join(
+        [
+            "# Rewrite Plan Prompt",
+            "",
+            'schema_version: "0.6"',
+            f"branch: {yaml_quote(branch_name)}",
+            "",
+            "Read the rewrite context pack, plot node map, divergence analysis, and replacement routes.",
+            "Do not read raw_text/full_text.txt.",
+            "Do not write prose, canon, branches/main, or apply patches.",
+            "Produce branch-local rewrite artifact updates and required user decisions.",
+            "",
+        ]
+    )
+
+
+def render_branch_diff_report(branch_name: str) -> str:
+    return "\n".join(
+        [
+            "---",
+            'schema_version: "0.6"',
+            f"branch: {yaml_quote(branch_name)}",
+            'base_branch: "main"',
+            'divergence_id: ""',
+            'impact_radius: ""',
+            'report_type: "branch_diff_report"',
+            'status: "draft"',
+            "---",
+            "",
+            "# Branch Diff Report",
+            "",
+            "Generated branch-local diff report skeleton. Run create-branch-diff-report after rewrite artifacts are reviewed.",
+            "",
+        ]
+    )
+
+
+def create_rewrite_placeholders(branch_dir: Path, branch_name: str, divergence: str, base_chapter: str, force: bool) -> None:
+    rewrite_dir = branch_dir / "rewrite"
+    rewrite_dir.mkdir(parents=True, exist_ok=True)
+    write_text_if_allowed(rewrite_dir / ".gitkeep", "placeholder\n", force)
+    write_text_if_allowed(rewrite_dir / "plot_node_map.yaml", render_rewrite_plot_node_map(branch_name), force)
+    write_text_if_allowed(
+        rewrite_dir / "divergence_analysis.yaml",
+        render_rewrite_divergence_analysis(branch_name, divergence, base_chapter),
+        force,
+    )
+    write_text_if_allowed(rewrite_dir / "replacement_routes.yaml", render_rewrite_replacement_routes(branch_name), force)
+    write_text_if_allowed(rewrite_dir / "rewrite_plan_prompt.md", render_rewrite_plan_prompt(branch_name), force)
+    write_text_if_allowed(rewrite_dir / "branch_diff_report.md", render_branch_diff_report(branch_name), force)
+
+
 def create_branch(
     project: Path,
     branch: str,
@@ -149,6 +272,7 @@ def create_branch(
         render_divergence(branch_name, divergence, inherit, base_chapter),
         force,
     )
+    create_rewrite_placeholders(branch_dir, branch_name, divergence, base_chapter, force)
     return branch_dir
 
 

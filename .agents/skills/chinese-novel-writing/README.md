@@ -60,6 +60,29 @@ python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-patc
 python .agents/skills/chinese-novel-writing/scripts/novel_project.py validate --project-root ./tmp/demo_novel
 ```
 
+## v0.6 Additions
+
+v0.6 adds plot rewrite intelligence and divergence analysis. It provides branch-local rewrite artifacts and prompts; it does not write prose, connect databases/vector stores, call external APIs, auto-change `canon/`, or auto-confirm major plot changes.
+
+New commands:
+
+- `create-plot-node-map`
+- `create-divergence-analysis`
+- `create-rewrite-plan`
+- `create-branch-diff-report`
+
+Minimal v0.6 rewrite flow:
+
+```bash
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py new-branch --project-root ./tmp/demo_novel --name what_if_villain_ally --title "反派成为盟友线" --divergence "主角提前和反派成为朋友" --inherit skeleton --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py build-context-pack --project-root ./tmp/demo_novel --branch what_if_villain_ally --task rewrite_plot --chapter 1 --user-request "如果主角提前和反派成为朋友，后续剧情如何重构？" --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-plot-node-map --project-root ./tmp/demo_novel --branch what_if_villain_ally --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-divergence-analysis --project-root ./tmp/demo_novel --branch what_if_villain_ally --divergence "主角提前和反派成为朋友" --impact-radius level_2_relationship --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-rewrite-plan --project-root ./tmp/demo_novel --branch what_if_villain_ally --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-branch-diff-report --project-root ./tmp/demo_novel --branch what_if_villain_ally --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py validate --project-root ./tmp/demo_novel
+```
+
 Minimal v0.5 writing-quality flow:
 
 ```bash
@@ -220,6 +243,10 @@ python .agents/skills/chinese-novel-writing/scripts/novel_project.py validate --
 - `create_chapter_function_card.py`
 - `build_context_pack.py`
 - `create_draft_prompt.py`
+- `create_plot_node_map.py`
+- `create_divergence_analysis.py`
+- `create_rewrite_plan.py`
+- `create_branch_diff_report.py`
 - `create_quality_report.py`
 - `create_patch.py`
 - `create_patch_review.py`
@@ -230,6 +257,7 @@ python .agents/skills/chinese-novel-writing/scripts/novel_project.py validate --
 
 - v0.5.1 does not add a new schema version.
 - v0.5 uses `schema_version: "0.5"` for chapter function cards, draft prompts, quality review prompts, and patch review reports.
+- v0.6 uses `schema_version: "0.6"` for plot rewrite artifacts under `branches/<branch>/rewrite/`.
 - The project skeleton remains `schema_version: "0.4"` and is still valid.
 - `output_mode` 是 canonical 字段；旧需求里的 `preferred_output_mode` 不是当前实现主字段。
 - 重要事实继续使用 `source` / `status` / `confidence`。

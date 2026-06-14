@@ -1,6 +1,6 @@
 ---
 name: chinese-novel-writing
-description: Use this skill for Chinese novel writing projects and long-form fiction workflows: create project, write novel, import story, continue story, build outline, style profiling, maintain story bible, build context packs, review story, rewrite plot, alternate plot, and branch-isolated Chinese novel restructuring.
+description: "Use this skill for Chinese novel writing projects and long-form fiction workflows, including project creation, story import, continuation, outline building, style profiling, story bible maintenance, context pack generation, branch-isolated plot rewriting, alternate plot planning, divergence analysis, and quality review."
 ---
 
 # Chinese Novel Writing
@@ -29,7 +29,7 @@ Map each request to the nearest workflow in `references/workflows.md`. If the re
 - `context_pack_builder`: assemble only task-relevant facts, summaries, and constraints.
 - `drafting_pipeline`: generate a draft prompt from the chapter function card and context pack, write only after model review, then run quality checks.
 - `continuation_pipeline`: continue only after branch and recent context are known.
-- `plot_rewrite_pipeline`: create or use an alternate branch before changing causal development.
+- `plot_rewrite_pipeline`: create or use an alternate branch, then generate v0.6 plot-node, divergence-analysis, rewrite-plan, and branch-diff artifacts before changing causal development.
 - `post_write_update_pipeline`: generate pending patch files instead of directly editing bible files.
 - `patch_apply_pipeline`: create a patch review report, dry-run pending patches first, then apply only limited safe updates after explicit confirmation.
 - `quality_gate`: generate or fill quality reports from draft plus context pack, checking consistency, branch boundaries, style drift, pacing, and major plot-control risks.
@@ -56,6 +56,7 @@ Load only the reference needed for the current task:
 - Drafting, continuation, review, or rewrite context: `references/context_pack.md`.
 - Chapter goal planning before drafting: `references/chapter_function_card.md`.
 - Alternate plot or branch work: `references/branch_system.md`.
+- Plot rewrite divergence analysis: `references/plot_rewrite_intelligence.md`.
 - Post-write database updates: `references/patch_update.md`.
 - Consistency review: `references/quality_gate.md`.
 - Data fields and templates: `references/schemas.md`.
@@ -64,9 +65,9 @@ Load only the reference needed for the current task:
 
 ## Script Usage
 
-Use `scripts/novel_project.py` as the preferred v0.5.1 unified CLI for deterministic file work. Use lower-level scripts only when fine-grained control is needed.
+Use `scripts/novel_project.py` as the preferred v0.6 unified CLI for deterministic file work. Use lower-level scripts only when fine-grained control is needed.
 
-- `scripts/novel_project.py` exposes `init`, `split-import`, `init-progress`, `create-batch`, `import-status`, `create-chapter-card-batch`, `create-volume-summary-batch`, `create-bible-patch-batch`, `mark-done`, `build-indexes`, `new-branch`, `create-function-card`, `build-context-pack`, `create-draft-prompt`, `create-quality-report`, `create-patch`, `review-patch`, `create-patch-review`, `apply-patch`, and `validate`.
+- `scripts/novel_project.py` exposes `init`, `split-import`, `init-progress`, `create-batch`, `import-status`, `create-chapter-card-batch`, `create-volume-summary-batch`, `create-bible-patch-batch`, `mark-done`, `build-indexes`, `new-branch`, `create-function-card`, `build-context-pack`, `create-draft-prompt`, `create-plot-node-map`, `create-divergence-analysis`, `create-rewrite-plan`, `create-branch-diff-report`, `create-quality-report`, `create-patch`, `review-patch`, `create-patch-review`, `apply-patch`, and `validate`.
 - `scripts/init_project.py` creates a project from templates.
 - `scripts/split_chapters.py` splits imported text and writes an import manifest.
 - `scripts/split_chunks.py` splits chapter files into overlapping chunks and writes a chunk manifest.
@@ -79,6 +80,10 @@ Use `scripts/novel_project.py` as the preferred v0.5.1 unified CLI for determini
 - `scripts/mark_extraction_done.py` marks chunks or batches as queued, processing, done, failed, or skipped.
 - `scripts/build_indexes.py` rebuilds lightweight navigation indexes without external services.
 - `scripts/create_branch.py` creates isolated alternate-plot branches.
+- `scripts/create_plot_node_map.py` creates a v0.6 branch-local plot-node map skeleton.
+- `scripts/create_divergence_analysis.py` creates a v0.6 branch-local divergence-analysis skeleton.
+- `scripts/create_rewrite_plan.py` creates a v0.6 rewrite-plan prompt and replacement-route skeleton.
+- `scripts/create_branch_diff_report.py` creates a v0.6 branch diff report for user review.
 - `scripts/create_chapter_function_card.py` creates branch-local v0.5 chapter function cards.
 - `scripts/build_context_pack.py` creates a context-pack skeleton without reading full raw text; `--auto-select` can fill selectors from indexes and chapter/recent hints.
 - `scripts/create_draft_prompt.py` creates a drafting prompt from the context pack and chapter function card without writing prose; `--target-length` and `--style-strictness` are prompt controls only.

@@ -63,13 +63,22 @@ Input: a "what if", divergence, or request to change original development while 
 
 Steps:
 
-1. Read canon and original plot map summaries only as needed.
-2. Identify divergence point, impact radius, preserved facts, and allowed changes.
-3. Map original plot nodes as preserved, invalidated, inverted, or needing replacement.
-4. Create a new branch with `scripts/novel_project.py new-branch`, defaulting to `--inherit skeleton`.
-5. Produce 2-3 route options when the change is high impact.
-6. Recalculate relationships, causal chain, antagonist plan, timeline, foreshadowing, and outline within the new branch.
-7. Run branch pollution and plausibility checks.
+1. Create or select an isolated branch with `scripts/novel_project.py new-branch`, defaulting to `--inherit skeleton`.
+2. Build a rewrite context pack with `scripts/novel_project.py build-context-pack --task rewrite_plot`.
+3. Create a branch-local plot node map with `scripts/novel_project.py create-plot-node-map`.
+4. Create divergence analysis with `scripts/novel_project.py create-divergence-analysis`.
+5. Create a rewrite plan prompt and replacement-route skeleton with `scripts/novel_project.py create-rewrite-plan`.
+6. Let Codex/model fill or revise rewrite artifacts from the generated prompt. The prompt does not generate prose.
+7. Create a branch diff report with `scripts/novel_project.py create-branch-diff-report` for user review.
+8. Run `scripts/novel_project.py validate` and resolve missing artifact suggestions.
+9. Ask the user to confirm required decisions or choose a replacement route before outline or draft work.
+
+Rules:
+
+- Do not read `raw_text/full_text.txt`.
+- Do not edit `canon/` or `branches/main/`.
+- Do not auto-apply patches or merge branches.
+- Put major plot changes under `requires_user_decision`.
 
 Output: branch created, divergence summary, route recommendation, outline impact, and pending decisions.
 

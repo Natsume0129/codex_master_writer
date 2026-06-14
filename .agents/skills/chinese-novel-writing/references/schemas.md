@@ -9,6 +9,7 @@ These schemas define the expected shape of project files. YAML examples are temp
 - Existing structural project files from v0.4 remain valid.
 - New v0.5 writing-control artifacts use `schema_version: "0.5"`: chapter function cards, draft prompts, quality review prompts, and patch review reports.
 - v0.5.1 does not introduce `schema_version: "0.5.1"`.
+- New v0.6 rewrite artifacts use `schema_version: "0.6"`: plot node maps, divergence analyses, replacement routes, rewrite plan prompts, and branch diff reports.
 - New v0.4 import and patch skeleton formats still use `schema_version: "0.4"` unless that specific format is migrated.
 - `output_mode` is the canonical output field. `preferred_output_mode` is an older requirements name and is not the current implementation field.
 - Important facts use `source`, `status`, and `confidence`. Do not reintroduce `fact_status`.
@@ -550,6 +551,125 @@ Required sections:
 - dry-run and apply guidance
 
 Safe update fields are currently `updates.timeline`, `updates.foreshadowing_added`, `updates.open_questions_added`, and `updates.continuity_issues`. Other update fields are review-only unless a future helper explicitly supports them.
+
+## v0.6 Plot Node Map
+
+```yaml
+schema_version: "0.6"
+project: ""
+branch: ""
+base_branch: "main"
+source_scope: []
+generated_at: ""
+missing_sections: []
+plot_nodes:
+  - id: ""
+    source_branch: ""
+    chapter: ""
+    scene: ""
+    event: ""
+    summary: ""
+    causes: []
+    effects: []
+    required_conditions: []
+    affected_characters: []
+    affected_relationships: []
+    affected_factions: []
+    affected_items: []
+    affected_locations: []
+    affected_world_rules: []
+    foreshadowing_links: []
+    status: "confirmed | inferred | uncertain"
+    source: []
+    confidence: "high | medium | low"
+    can_survive_divergence: "yes | no | uncertain"
+    replacement_needed_if_changed: true
+```
+
+## v0.6 Divergence Analysis
+
+```yaml
+schema_version: "0.6"
+project: ""
+branch: ""
+base_branch: "main"
+divergence_id: ""
+divergence_title: ""
+base_chapter: ""
+original_fact: ""
+changed_fact: ""
+divergence_time: ""
+impact_radius: "level_1_local | level_2_relationship | level_3_main_plot | level_4_world_rule | uncertain"
+impact_reason: ""
+preserved_facts: []
+can_change: []
+invalidated_plot_nodes: []
+preserved_plot_nodes: []
+inverted_plot_nodes: []
+replacement_plot_nodes: []
+relationship_impacts: []
+faction_impacts: []
+timeline_impacts: []
+foreshadowing_impacts: []
+world_rule_impacts: []
+new_conflicts: []
+unresolved_risks: []
+requires_user_decision: []
+source: []
+status: "confirmed | inferred | uncertain | user_override"
+confidence: "high | medium | low"
+missing_sections: []
+```
+
+## v0.6 Replacement Routes
+
+```yaml
+schema_version: "0.6"
+project: ""
+branch: ""
+divergence_id: ""
+routes:
+  - route_id: ""
+    title: ""
+    premise: ""
+    preserved_nodes: []
+    replaced_nodes: []
+    inverted_nodes: []
+    new_major_conflicts: []
+    relationship_direction: []
+    antagonist_plan_changes: []
+    timeline_changes: []
+    foreshadowing_to_add: []
+    risks: []
+    requires_user_decision: []
+    recommendation: "primary | alternative | risky | rejected"
+    reason: ""
+status: "draft"
+confidence: "medium"
+```
+
+## v0.6 Branch Diff Report
+
+Markdown report with YAML frontmatter:
+
+```yaml
+---
+schema_version: "0.6"
+project: ""
+branch: ""
+base_branch: "main"
+divergence_id: ""
+impact_radius: ""
+report_type: "branch_diff_report"
+status: "draft"
+---
+```
+
+Required sections: summary, divergence point, impact radius, preserved plot nodes, invalidated plot nodes, inverted plot nodes, replacement needed, candidate replacement routes, timeline risks, relationship risks, foreshadowing risks, world rule risks, required user decisions, branch pollution checklist, and next recommended action.
+
+## v0.6 Rewrite Plan Prompt
+
+Markdown prompt with metadata. It instructs Codex/model to read the context pack, plot node map, divergence analysis, and replacement routes; avoid `raw_text/full_text.txt`; keep outputs branch-local; and produce artifact updates rather than prose.
 
 ## Navigation Index Entry
 

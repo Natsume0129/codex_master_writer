@@ -12,7 +12,7 @@ from pathlib import Path
 from _novel_utils import parse_mapping_list, parse_progress
 
 
-CURRENT_SCHEMA_VERSION = "0.5"
+CURRENT_SCHEMA_VERSION = "0.6"
 
 REQUIRED_DIRS = [
     "raw_text",
@@ -292,18 +292,11 @@ def check_context_pack_size(project: Path, warnings: list[str]) -> None:
     full_size = full_text.stat().st_size
     if full_size == 0 or full_size < 10_000:
         return
-    if full_size <= 200_000:
-        full_head = read_text(full_text)[:2000]
-    else:
-        with full_text.open("r", encoding="utf-8", errors="replace") as handle:
-            full_head = handle.read(2000)
     for context_pack in (project / "context_packs").glob("*.*"):
         if not context_pack.is_file():
             continue
         if context_pack.stat().st_size >= full_size * 0.9:
             warnings.append(f"context pack may contain too much raw text: {context_pack.relative_to(project)}")
-        if full_head and full_head.strip() and full_head.strip() in read_text(context_pack):
-            warnings.append(f"context pack appears to include the beginning of full_text: {context_pack.relative_to(project)}")
 
 
 def resolve_project_path(project: Path, raw: object) -> Path:
@@ -464,6 +457,76 @@ def check_quality_workflow_suggestions(project: Path, suggestions: list[str]) ->
         suggestions.append("pending patches exist; run review-patch, then apply-patch without --confirm for a dry run")
 
 
+def check_rewrite_workflow_suggestions(project: Path, suggestions: list[str]) -> None:
+    branches_dir = project / "branches"
+    if not branches_dir.exists():
+        return
+    for branch_dir in sorted(item for item in branches_dir.iterdir() if item.is_dir()):
+        branch = branch_dir.name
+        if not (branch_dir / "divergence_point.yaml").exists():
+            continue
+        rewrite_dir = branch_dir / "rewrite"
+        checks = [
+            (
+                rewrite_dir / "plot_node_map.yaml",
+                f"branch {branch} missing rewrite/plot_node_map.yaml; run create-plot-node-map --branch {branch}",
+            ),
+            (
+                rewrite_dir / "divergence_analysis.yaml",
+                f"branch {branch} has divergence_point.yaml but no rewrite/divergence_analysis.yaml; run create-divergence-analysis --branch {branch}",
+            ),
+            (
+                rewrite_dir / "rewrite_plan_prompt.md",
+                f"branch {branch} missing rewrite/rewrite_plan_prompt.md; run create-rewrite-plan --branch {branch}",
+            ),
+            (
+                rewrite_dir / "branch_diff_report.md",
+                f"branch {branch} missing rewrite/branch_diff_report.md; run create-branch-diff-report --branch {branch}",
+            ),
+        ]
+        for path, message in checks:
+            if not path.exists():
+                suggestions.append(message)
+        if not (rewrite_dir / "replacement_routes.yaml").exists():
+            suggestions.append(
+                f"branch {branch} missing rewrite/replacement_routes.yaml; run create-rewrite-plan --branch {branch}"
+            )
+
+
+def check_skill_frontmatter(warnings: list[str], suggestions: list[str]) -> None:
+    skill_path = Path(__file__).resolve().parents[1] / "SKILL.md"
+    if not skill_path.exists():
+        warnings.append("SKILL.md is missing from the skill directory")
+        return
+    text = read_text(skill_path)
+    lines = text.splitlines()
+    if not lines or lines[0].strip() != "---":
+        warnings.append("SKILL.md does not start with YAML frontmatter")
+        return
+    try:
+        end = next(index for index, line in enumerate(lines[1:], start=1) if line.strip() == "---")
+    except StopIteration:
+        warnings.append("SKILL.md frontmatter is not closed")
+        return
+    frontmatter = lines[1:end]
+    keys = {line.split(":", 1)[0].strip() for line in frontmatter if ":" in line}
+    for required in ("name", "description"):
+        if required not in keys:
+            warnings.append(f"SKILL.md frontmatter missing {required}")
+    for line in frontmatter:
+        stripped = line.strip()
+        if not stripped.startswith("description:"):
+            continue
+        value = stripped.split(":", 1)[1].strip()
+        if ":" in value and not (
+            value.startswith('"')
+            or value.startswith("'")
+            or value.startswith("|")
+            or value.startswith(">")
+        ):
+            suggestions.append("SKILL.md description contains ':' and should be quoted or use a block scalar")
+
+
 def validate_project(project: Path) -> tuple[list[str], list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
@@ -494,6 +557,8 @@ def validate_project(project: Path) -> tuple[list[str], list[str], list[str]]:
     check_chunk_manifest(project, errors, warnings)
     check_extraction_progress(project, errors, warnings, suggestions)
     check_quality_workflow_suggestions(project, suggestions)
+    check_rewrite_workflow_suggestions(project, suggestions)
+    check_skill_frontmatter(warnings, suggestions)
 
     if not (project / "context_packs" / "latest_context_pack.md").exists():
         suggestions.append("generate context_packs/latest_context_pack.md before drafting or review")

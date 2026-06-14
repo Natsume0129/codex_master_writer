@@ -12,7 +12,7 @@ python .agents/skills/chinese-novel-writing/scripts/novel_project.py <subcommand
 
 Use lower-level scripts only when a task needs fine-grained control or direct compatibility with an existing workflow.
 
-Supported v0.5.1 subcommands:
+Supported v0.6 subcommands:
 
 - `init`
 - `split-import`
@@ -28,6 +28,10 @@ Supported v0.5.1 subcommands:
 - `create-function-card`
 - `build-context-pack`
 - `create-draft-prompt`
+- `create-plot-node-map`
+- `create-divergence-analysis`
+- `create-rewrite-plan`
+- `create-branch-diff-report`
 - `create-quality-report`
 - `create-patch`
 - `review-patch`
@@ -141,6 +145,12 @@ python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-qual
 
 ## Rewrite Plot
 
+Example user request:
+
+```text
+Based on chapter 12 of main, if the protagonist does not kill the antagonist and instead forms an alliance, create a divergent branch and analyze downstream plot impact.
+```
+
 Create an isolated branch for what-if or divergence requests:
 
 ```bash
@@ -148,6 +158,18 @@ python .agents/skills/chinese-novel-writing/scripts/novel_project.py new-branch 
 ```
 
 Keep branch state local. Do not write branch timeline, character state, or foreshadowing back into `canon/` or `branches/main/`.
+
+Then build context and rewrite artifacts:
+
+```bash
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py build-context-pack --project-root ./projects/my-novel --branch villain-ally --task rewrite_plot --chapter 12 --user-request "protagonist allies with antagonist instead of killing them" --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-plot-node-map --project-root ./projects/my-novel --branch villain-ally --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-divergence-analysis --project-root ./projects/my-novel --branch villain-ally --impact-radius level_2_relationship --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-rewrite-plan --project-root ./projects/my-novel --branch villain-ally --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-branch-diff-report --project-root ./projects/my-novel --branch villain-ally --force
+```
+
+Codex should ask the user to confirm a replacement route or required decisions before outline or draft work. `create-rewrite-plan` generates a prompt and route skeleton; it does not write prose.
 
 ## Post-Write Patch
 

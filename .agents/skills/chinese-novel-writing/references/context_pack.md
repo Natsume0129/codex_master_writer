@@ -118,6 +118,22 @@ Use recent chapter summaries, previous ending, current outline, relevant charact
 
 Use canon facts, original plot map summary, divergence point, must-preserve facts, impact radius, active alternate branch files, and branch-local timeline. Do not mix in unrelated alternate branches.
 
+For `rewrite_plot`, the context pack should include only task-relevant excerpts from:
+
+- `branches/<branch>/branch_config.yaml`
+- `branches/<branch>/divergence_point.yaml`
+- selected chapter summaries
+- branch-local timeline excerpts
+- relevant story bible entries
+- style constraints
+- `canon/original_plot_map.md`
+- `branches/<branch>/rewrite/plot_node_map.yaml` if available
+- `branches/<branch>/rewrite/divergence_analysis.yaml` if available
+- `branches/<branch>/rewrite/replacement_routes.yaml` if available
+- `missing_sections`
+
+Do not read `raw_text/full_text.txt`, do not default to the whole novel, and do not include unrelated branch artifacts.
+
 ## Review Context
 
 Use the draft or outline being reviewed, branch-local timeline, relevant bible facts, recent summaries, foreshadowing status, and hard constraints.

@@ -357,6 +357,79 @@ def command_create_draft_prompt(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_create_plot_node_map(args: argparse.Namespace) -> int:
+    script_args = [
+        "--project",
+        path_text(args.project_root),
+        "--branch",
+        args.branch,
+        "--base-branch",
+        args.base_branch,
+    ]
+    add_value(script_args, "--source", args.source)
+    add_value(script_args, "--output", args.output)
+    add_flag(script_args, args.force, "--force")
+    run_step("Create plot node map", "create_plot_node_map.py", script_args)
+    return 0
+
+
+def command_create_divergence_analysis(args: argparse.Namespace) -> int:
+    script_args = [
+        "--project",
+        path_text(args.project_root),
+        "--branch",
+        args.branch,
+        "--base-branch",
+        args.base_branch,
+    ]
+    add_value(script_args, "--base-chapter", args.base_chapter)
+    add_value(script_args, "--divergence", args.divergence)
+    add_value(script_args, "--original-fact", args.original_fact)
+    add_value(script_args, "--changed-fact", args.changed_fact)
+    add_value(script_args, "--impact-radius", args.impact_radius)
+    add_value(script_args, "--output", args.output)
+    add_flag(script_args, args.force, "--force")
+    run_step("Create divergence analysis", "create_divergence_analysis.py", script_args)
+    return 0
+
+
+def command_create_rewrite_plan(args: argparse.Namespace) -> int:
+    script_args = [
+        "--project",
+        path_text(args.project_root),
+        "--branch",
+        args.branch,
+        "--base-branch",
+        args.base_branch,
+    ]
+    add_value(script_args, "--context-pack", args.context_pack)
+    add_value(script_args, "--plot-node-map", args.plot_node_map)
+    add_value(script_args, "--divergence-analysis", args.divergence_analysis)
+    add_value(script_args, "--replacement-routes", args.replacement_routes)
+    add_value(script_args, "--output", args.output)
+    add_flag(script_args, args.force, "--force")
+    run_step("Create rewrite plan prompt", "create_rewrite_plan.py", script_args)
+    return 0
+
+
+def command_create_branch_diff_report(args: argparse.Namespace) -> int:
+    script_args = [
+        "--project",
+        path_text(args.project_root),
+        "--branch",
+        args.branch,
+        "--base-branch",
+        args.base_branch,
+    ]
+    add_value(script_args, "--divergence-analysis", args.divergence_analysis)
+    add_value(script_args, "--replacement-routes", args.replacement_routes)
+    add_value(script_args, "--plot-node-map", args.plot_node_map)
+    add_value(script_args, "--output", args.output)
+    add_flag(script_args, args.force, "--force")
+    run_step("Create branch diff report", "create_branch_diff_report.py", script_args)
+    return 0
+
+
 def command_create_patch(args: argparse.Namespace) -> int:
     script_args = [
         "--project",
@@ -613,6 +686,73 @@ def build_parser() -> argparse.ArgumentParser:
     )
     draft_prompt.add_argument("--force", action="store_true")
     draft_prompt.set_defaults(func=command_create_draft_prompt)
+
+    plot_node_map = subparsers.add_parser(
+        "create-plot-node-map",
+        help="Create a v0.6 rewrite plot-node map skeleton.",
+    )
+    project_arg(plot_node_map)
+    plot_node_map.add_argument("--branch", default="main")
+    plot_node_map.add_argument("--base-branch", default="main")
+    plot_node_map.add_argument("--source", default="")
+    plot_node_map.add_argument("--output", type=Path)
+    plot_node_map.add_argument("--force", action="store_true")
+    plot_node_map.set_defaults(func=command_create_plot_node_map)
+
+    divergence_analysis = subparsers.add_parser(
+        "create-divergence-analysis",
+        help="Create a v0.6 divergence-analysis skeleton.",
+    )
+    project_arg(divergence_analysis)
+    divergence_analysis.add_argument("--branch", default="main")
+    divergence_analysis.add_argument("--base-branch", default="main")
+    divergence_analysis.add_argument("--base-chapter", default="")
+    divergence_analysis.add_argument("--divergence", default="")
+    divergence_analysis.add_argument("--original-fact", default="")
+    divergence_analysis.add_argument("--changed-fact", default="")
+    divergence_analysis.add_argument(
+        "--impact-radius",
+        choices=(
+            "level_1_local",
+            "level_2_relationship",
+            "level_3_main_plot",
+            "level_4_world_rule",
+            "uncertain",
+        ),
+        default="",
+    )
+    divergence_analysis.add_argument("--output", type=Path)
+    divergence_analysis.add_argument("--force", action="store_true")
+    divergence_analysis.set_defaults(func=command_create_divergence_analysis)
+
+    rewrite_plan = subparsers.add_parser(
+        "create-rewrite-plan",
+        help="Create a v0.6 rewrite-plan prompt and replacement route skeleton.",
+    )
+    project_arg(rewrite_plan)
+    rewrite_plan.add_argument("--branch", default="main")
+    rewrite_plan.add_argument("--base-branch", default="main")
+    rewrite_plan.add_argument("--context-pack", type=Path)
+    rewrite_plan.add_argument("--plot-node-map", type=Path)
+    rewrite_plan.add_argument("--divergence-analysis", type=Path)
+    rewrite_plan.add_argument("--replacement-routes", type=Path)
+    rewrite_plan.add_argument("--output", type=Path)
+    rewrite_plan.add_argument("--force", action="store_true")
+    rewrite_plan.set_defaults(func=command_create_rewrite_plan)
+
+    branch_diff_report = subparsers.add_parser(
+        "create-branch-diff-report",
+        help="Create a v0.6 branch diff report for review.",
+    )
+    project_arg(branch_diff_report)
+    branch_diff_report.add_argument("--branch", default="main")
+    branch_diff_report.add_argument("--base-branch", default="main")
+    branch_diff_report.add_argument("--divergence-analysis", type=Path)
+    branch_diff_report.add_argument("--replacement-routes", type=Path)
+    branch_diff_report.add_argument("--plot-node-map", type=Path)
+    branch_diff_report.add_argument("--output", type=Path)
+    branch_diff_report.add_argument("--force", action="store_true")
+    branch_diff_report.set_defaults(func=command_create_branch_diff_report)
 
     create_patch = subparsers.add_parser("create-patch", help="Create a pending post-write patch.")
     project_arg(create_patch)

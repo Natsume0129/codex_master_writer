@@ -513,6 +513,21 @@ def collect_context(args: argparse.Namespace) -> tuple[dict[str, str | list[str]
             context[key] = ""
             missing.append(rel)
 
+    if args.task == "rewrite_plot":
+        for key, rel in {
+            "original_plot_map": "canon/original_plot_map.md",
+            "divergence_point": f"branches/{args.branch}/divergence_point.yaml",
+            "rewrite_plot_node_map": f"branches/{args.branch}/rewrite/plot_node_map.yaml",
+            "rewrite_divergence_analysis": f"branches/{args.branch}/rewrite/divergence_analysis.yaml",
+            "rewrite_replacement_routes": f"branches/{args.branch}/rewrite/replacement_routes.yaml",
+        }.items():
+            path = project / rel
+            if path.exists():
+                context[key] = read_head(path, 6000)
+            else:
+                context[key] = ""
+                missing.append(rel)
+
     summaries = []
     for path in latest_files(branch_dir / "chapter_summaries", args.include_recent):
         summaries.append(f"## {path.name}\n{read_head(path, 2000)}")
@@ -668,6 +683,12 @@ def render_yaml(args: argparse.Namespace, context: dict[str, str | list[str]], m
             f"    open_questions: {yaml_quote(context.get('open_questions', ''))}",
             "  hard_constraints:",
             f"    must_not_change: {yaml_quote(context.get('hard_constraints', ''))}",
+            "  rewrite_context:",
+            f"    original_plot_map: {yaml_quote(context.get('original_plot_map', ''))}",
+            f"    divergence_point: {yaml_quote(context.get('divergence_point', ''))}",
+            f"    plot_node_map: {yaml_quote(context.get('rewrite_plot_node_map', ''))}",
+            f"    divergence_analysis: {yaml_quote(context.get('rewrite_divergence_analysis', ''))}",
+            f"    replacement_routes: {yaml_quote(context.get('rewrite_replacement_routes', ''))}",
             "  auto_selection:",
             f"    enabled: {'true' if args.auto_select else 'false'}",
             f"    selector_source: {yaml_quote(args.selector_source)}",
@@ -847,6 +868,36 @@ Source: `{context.get("previous_chapter_ending_source", "")}`
 ## Hard Constraints
 
 {context.get("hard_constraints", "")}
+
+## Rewrite Context
+
+### Original Plot Map
+
+{context.get("original_plot_map", "")}
+
+### Divergence Point
+
+```yaml
+{context.get("divergence_point", "")}
+```
+
+### Plot Node Map
+
+```yaml
+{context.get("rewrite_plot_node_map", "")}
+```
+
+### Divergence Analysis
+
+```yaml
+{context.get("rewrite_divergence_analysis", "")}
+```
+
+### Replacement Routes
+
+```yaml
+{context.get("rewrite_replacement_routes", "")}
+```
 
 ## Auto Selection
 

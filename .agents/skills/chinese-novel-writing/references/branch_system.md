@@ -35,6 +35,15 @@ Each alternate branch should have:
 - `chapter_function_cards/`
 - `drafts/`
 - `reviews/`
+- `rewrite/`
+
+The v0.6 rewrite directory contains:
+
+- `plot_node_map.yaml`: source-backed plot node inventory and survival flags.
+- `divergence_analysis.yaml`: structured divergence point, impact radius, node classifications, risks, and required decisions.
+- `replacement_routes.yaml`: candidate routes for user/model review.
+- `rewrite_plan_prompt.md`: prompt for Codex/model to fill rewrite artifacts; it does not draft prose.
+- `branch_diff_report.md`: user-facing difference report; it is not an apply or merge action.
 
 Use the unified CLI:
 
@@ -70,6 +79,8 @@ Record:
 - Branch foreshadowing does not write into another branch.
 - `canon/` records original/base facts and source-tracked corrections only.
 - Merging branch ideas back to main requires an explicit user-approved patch.
+- Branch diff reports do not modify files outside the active branch.
+- Rewrite artifacts must remain under `branches/<branch>/rewrite/`.
 
 ## Causal Impact Log
 
@@ -85,3 +96,10 @@ Use `causal_impact_log.md` to track cause-effect changes after divergence:
 ## Divergence Analysis
 
 Use the schema in `schemas.md` to record `divergence_analysis` with invalidated, preserved, inverted, and replacement plot nodes. Do not write branch-local outcomes back into canon.
+
+Relationship to v0.6 rewrite artifacts:
+
+- `causal_impact_log.md`: ongoing human/model reasoning log.
+- `rewrite/divergence_analysis.yaml`: structured divergence analysis.
+- `rewrite/replacement_routes.yaml`: candidate replacement routes.
+- `rewrite/branch_diff_report.md`: review report for the user.
