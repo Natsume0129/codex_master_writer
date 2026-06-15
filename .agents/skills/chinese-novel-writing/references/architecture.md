@@ -17,16 +17,17 @@ A novel project is a file-based knowledge base:
 - `branches/<branch>/draft_prompts/` and `branches/<branch>/reviews/` store v0.5 writing and review workflow artifacts.
 - `branches/<branch>/rewrite/` stores v0.6 plot rewrite and divergence-analysis artifacts.
 - `indexes/retrieval_index.jsonl` stores v0.7 retrieval candidates derived from structured artifacts only.
+- `branches/<branch>/style/`, `branches/<branch>/outlines/`, and `branches/<branch>/revision/` store v0.8 style profile, character voice, scene outline, and revision-loop artifacts.
 
 ## Project Directory
 
-The standard project template is under `templates/novel_project/`. Its structural skeleton still uses the v0.4 schema, while v0.5 writing-quality artifacts use their own v0.5 markers. Scripts copy this whole directory when initializing a new novel project. This is intentionally kept instead of the older `assets/templates/` single-file layout because the project is directory-shaped and easier to validate as a complete empty skeleton. The template is intentionally empty of real story content.
+The standard project template is under `templates/novel_project/`. Its structural skeleton still uses the v0.4 schema, while later workflow artifacts use their own markers: v0.5 writing prompts and patch review, v0.6 rewrite intelligence, v0.7 retrieval/audit, and v0.8 style/voice/revision controls. Scripts copy this whole directory when initializing a new novel project. This is intentionally kept instead of the older `assets/templates/` single-file layout because the project is directory-shaped and easier to validate as a complete empty skeleton. The template is intentionally empty of real story content.
 
 Important directories:
 
 - `canon/`: base facts and original plot map. Alternate branches must not overwrite it.
 - `branches/main/`: main continuation line.
-- `branches/<name>/`: isolated rewrite branch with its own timeline, outline, foreshadowing, continuity log, chapter summaries, rewrite artifacts, draft prompts, drafts, and reviews.
+- `branches/<name>/`: isolated rewrite branch with its own timeline, outline, foreshadowing, continuity log, chapter summaries, rewrite artifacts, style controls, scene outlines, revision plans, draft prompts, drafts, and reviews.
 - `pending_updates/`: candidate updates generated after writing. These patches are reviewed before merging into bible files.
 - `context_packs/`: compact input bundles for current tasks.
 

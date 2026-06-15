@@ -328,6 +328,12 @@ def command_build_context_pack(args: argparse.Namespace) -> int:
     add_value(script_args, "--max-selectors", args.max_selectors)
     add_flag(script_args, args.write_selector_report, "--write-selector-report")
     add_value(script_args, "--selector-report-output", args.selector_report_output)
+    add_flag(script_args, args.include_style_profile, "--include-style-profile")
+    add_flag(script_args, args.include_voice_sheet, "--include-voice-sheet")
+    add_flag(script_args, args.include_scene_outline, "--include-scene-outline")
+    add_value(script_args, "--style-profile", args.style_profile)
+    add_value(script_args, "--voice-sheet", args.voice_sheet)
+    add_value(script_args, "--scene-outline", args.scene_outline)
     add_flag(script_args, args.use_retrieval_index, "--use-retrieval-index")
     add_value(script_args, "--retrieval-index", args.retrieval_index)
     add_value(script_args, "--retrieval-query", args.retrieval_query)
@@ -339,6 +345,98 @@ def command_build_context_pack(args: argparse.Namespace) -> int:
     add_value(script_args, "--output", args.output)
     add_flag(script_args, args.force, "--force")
     run_step("Build context pack", "build_context_pack.py", script_args)
+    return 0
+
+
+def command_create_style_profile(args: argparse.Namespace) -> int:
+    script_args = ["--project", path_text(args.project_root), "--branch", args.branch]
+    add_value(script_args, "--genre", args.genre)
+    add_value(script_args, "--title", args.title)
+    add_value(script_args, "--profile-id", args.profile_id)
+    add_value(script_args, "--source", args.source)
+    add_value(script_args, "--context-pack", args.context_pack)
+    add_value(script_args, "--output", args.output)
+    add_value(script_args, "--prompt-output", args.prompt_output)
+    add_flag(script_args, args.prompt, "--prompt")
+    add_flag(script_args, args.force, "--force")
+    run_step("Create style profile", "create_style_profile.py", script_args)
+    return 0
+
+
+def command_create_voice_sheet(args: argparse.Namespace) -> int:
+    script_args = ["--project", path_text(args.project_root), "--branch", args.branch]
+    add_values(script_args, "--characters", args.characters)
+    add_value(script_args, "--context-pack", args.context_pack)
+    add_value(script_args, "--source", args.source)
+    add_value(script_args, "--output", args.output)
+    add_value(script_args, "--prompt-output", args.prompt_output)
+    add_flag(script_args, args.prompt, "--prompt")
+    add_flag(script_args, args.force, "--force")
+    run_step("Create character voice sheet", "create_voice_sheet.py", script_args)
+    return 0
+
+
+def command_create_scene_outline(args: argparse.Namespace) -> int:
+    script_args = [
+        "--project",
+        path_text(args.project_root),
+        "--branch",
+        args.branch,
+        "--chapter",
+        args.chapter,
+    ]
+    add_value(script_args, "--title", args.title)
+    add_value(script_args, "--context-pack", args.context_pack)
+    add_value(script_args, "--function-card", args.function_card)
+    add_value(script_args, "--style-profile", args.style_profile)
+    add_value(script_args, "--voice-sheet", args.voice_sheet)
+    add_value(script_args, "--output", args.output)
+    add_value(script_args, "--prompt-output", args.prompt_output)
+    add_flag(script_args, args.prompt, "--prompt")
+    add_flag(script_args, args.force, "--force")
+    run_step("Create scene outline", "create_scene_outline.py", script_args)
+    return 0
+
+
+def command_create_style_audit(args: argparse.Namespace) -> int:
+    script_args = [
+        "--project",
+        path_text(args.project_root),
+        "--branch",
+        args.branch,
+        "--chapter",
+        args.chapter,
+    ]
+    add_value(script_args, "--draft", args.draft)
+    add_value(script_args, "--context-pack", args.context_pack)
+    add_value(script_args, "--style-profile", args.style_profile)
+    add_value(script_args, "--voice-sheet", args.voice_sheet)
+    add_value(script_args, "--scene-outline", args.scene_outline)
+    add_value(script_args, "--output", args.output)
+    add_value(script_args, "--prompt-output", args.prompt_output)
+    add_flag(script_args, args.prompt, "--prompt")
+    add_flag(script_args, args.force, "--force")
+    run_step("Create style audit", "create_style_audit.py", script_args)
+    return 0
+
+
+def command_create_revision_plan(args: argparse.Namespace) -> int:
+    script_args = [
+        "--project",
+        path_text(args.project_root),
+        "--branch",
+        args.branch,
+        "--chapter",
+        args.chapter,
+    ]
+    add_value(script_args, "--draft", args.draft)
+    add_value(script_args, "--context-pack", args.context_pack)
+    add_value(script_args, "--quality-report", args.quality_report)
+    add_value(script_args, "--style-audit-report", args.style_audit_report)
+    add_value(script_args, "--scene-outline", args.scene_outline)
+    add_value(script_args, "--output", args.output)
+    add_flag(script_args, args.force, "--force")
+    run_step("Create revision plan", "create_revision_plan.py", script_args)
     return 0
 
 
@@ -395,6 +493,7 @@ def command_acceptance_check(args: argparse.Namespace) -> int:
     add_flag(script_args, args.skip_v05, "--skip-v05")
     add_flag(script_args, args.skip_v06, "--skip-v06")
     add_flag(script_args, args.skip_v07, "--skip-v07")
+    add_flag(script_args, args.skip_v08, "--skip-v08")
     add_value(script_args, "--output", args.output)
     add_flag(script_args, args.force, "--force")
     run_step("Run acceptance checks", "run_acceptance_checks.py", script_args)
@@ -418,6 +517,12 @@ def command_create_draft_prompt(args: argparse.Namespace) -> int:
     add_value(script_args, "--draft-output", args.draft_output)
     add_value(script_args, "--target-length", args.target_length)
     add_value(script_args, "--style-strictness", args.style_strictness)
+    add_value(script_args, "--style-profile", args.style_profile)
+    add_value(script_args, "--voice-sheet", args.voice_sheet)
+    add_value(script_args, "--scene-outline", args.scene_outline)
+    add_value(script_args, "--anti-ai-flavor-level", args.anti_ai_flavor_level)
+    add_flag(script_args, args.revision_mode, "--revision-mode")
+    add_value(script_args, "--revision-plan", args.revision_plan)
     add_flag(script_args, args.force, "--force")
     run_step("Create chapter draft prompt", "create_draft_prompt.py", script_args)
     return 0
@@ -727,6 +832,12 @@ def build_parser() -> argparse.ArgumentParser:
     context_pack.add_argument("--max-selectors", type=int, default=20)
     context_pack.add_argument("--write-selector-report", action="store_true")
     context_pack.add_argument("--selector-report-output", type=Path)
+    context_pack.add_argument("--include-style-profile", action="store_true")
+    context_pack.add_argument("--include-voice-sheet", action="store_true")
+    context_pack.add_argument("--include-scene-outline", action="store_true")
+    context_pack.add_argument("--style-profile", type=Path)
+    context_pack.add_argument("--voice-sheet", type=Path)
+    context_pack.add_argument("--scene-outline", type=Path)
     context_pack.add_argument("--use-retrieval-index", action="store_true")
     context_pack.add_argument("--retrieval-index", type=Path)
     context_pack.add_argument("--retrieval-query", default="")
@@ -738,6 +849,56 @@ def build_parser() -> argparse.ArgumentParser:
     context_pack.add_argument("--output", type=Path)
     context_pack.add_argument("--force", action="store_true")
     context_pack.set_defaults(func=command_build_context_pack)
+
+    style_profile = subparsers.add_parser(
+        "create-style-profile",
+        help="Create a v0.8 style profile skeleton and optional prompt.",
+    )
+    project_arg(style_profile)
+    style_profile.add_argument("--branch", default="main")
+    style_profile.add_argument("--genre", default="")
+    style_profile.add_argument("--title", default="")
+    style_profile.add_argument("--profile-id", default="")
+    style_profile.add_argument("--source", default="user_input")
+    style_profile.add_argument("--context-pack", type=Path)
+    style_profile.add_argument("--output", type=Path)
+    style_profile.add_argument("--prompt-output", type=Path)
+    style_profile.add_argument("--prompt", action="store_true")
+    style_profile.add_argument("--force", action="store_true")
+    style_profile.set_defaults(func=command_create_style_profile)
+
+    voice_sheet = subparsers.add_parser(
+        "create-voice-sheet",
+        help="Create a v0.8 character voice sheet skeleton and optional prompt.",
+    )
+    project_arg(voice_sheet)
+    voice_sheet.add_argument("--branch", default="main")
+    voice_sheet.add_argument("--characters", nargs="*", default=[])
+    voice_sheet.add_argument("--context-pack", type=Path)
+    voice_sheet.add_argument("--source", default="user_input")
+    voice_sheet.add_argument("--output", type=Path)
+    voice_sheet.add_argument("--prompt-output", type=Path)
+    voice_sheet.add_argument("--prompt", action="store_true")
+    voice_sheet.add_argument("--force", action="store_true")
+    voice_sheet.set_defaults(func=command_create_voice_sheet)
+
+    scene_outline = subparsers.add_parser(
+        "create-scene-outline",
+        help="Create a v0.8 scene outline skeleton and optional prompt.",
+    )
+    project_arg(scene_outline)
+    scene_outline.add_argument("--branch", default="main")
+    scene_outline.add_argument("--chapter", required=True)
+    scene_outline.add_argument("--title", default="")
+    scene_outline.add_argument("--context-pack", type=Path)
+    scene_outline.add_argument("--function-card", type=Path)
+    scene_outline.add_argument("--style-profile", type=Path)
+    scene_outline.add_argument("--voice-sheet", type=Path)
+    scene_outline.add_argument("--output", type=Path)
+    scene_outline.add_argument("--prompt-output", type=Path)
+    scene_outline.add_argument("--prompt", action="store_true")
+    scene_outline.add_argument("--force", action="store_true")
+    scene_outline.set_defaults(func=command_create_scene_outline)
 
     retrieval_index = subparsers.add_parser(
         "build-retrieval-index",
@@ -790,7 +951,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     acceptance = subparsers.add_parser(
         "acceptance-check",
-        help="Run deterministic v0.7 acceptance checks without pytest.",
+        help="Run deterministic v0.8 acceptance checks without pytest.",
     )
     acceptance.add_argument("--repo-root", type=Path, default=Path("."))
     acceptance.add_argument("--project-root", type=Path)
@@ -799,6 +960,7 @@ def build_parser() -> argparse.ArgumentParser:
     acceptance.add_argument("--skip-v05", action="store_true")
     acceptance.add_argument("--skip-v06", action="store_true")
     acceptance.add_argument("--skip-v07", action="store_true")
+    acceptance.add_argument("--skip-v08", action="store_true")
     acceptance.add_argument("--output", type=Path)
     acceptance.add_argument("--force", action="store_true")
     acceptance.set_defaults(func=command_acceptance_check)
@@ -812,10 +974,20 @@ def build_parser() -> argparse.ArgumentParser:
     draft_prompt.add_argument("--chapter", required=True)
     draft_prompt.add_argument("--context-pack", type=Path)
     draft_prompt.add_argument("--function-card", type=Path)
+    draft_prompt.add_argument("--style-profile", type=Path)
+    draft_prompt.add_argument("--voice-sheet", type=Path)
+    draft_prompt.add_argument("--scene-outline", type=Path)
     draft_prompt.add_argument("--output", type=Path)
     draft_prompt.add_argument("--draft-output", type=Path)
     draft_prompt.add_argument("--output-mode", default="draft_with_notes")
     draft_prompt.add_argument("--target-length", default="")
+    draft_prompt.add_argument(
+        "--anti-ai-flavor-level",
+        choices=("low", "medium", "high"),
+        default="",
+    )
+    draft_prompt.add_argument("--revision-mode", action="store_true")
+    draft_prompt.add_argument("--revision-plan", type=Path)
     draft_prompt.add_argument(
         "--style-strictness",
         choices=("low", "medium", "high"),
@@ -937,6 +1109,40 @@ def build_parser() -> argparse.ArgumentParser:
     quality_report.add_argument("--severity", choices=("serious", "medium", "light", "all"), default="all")
     quality_report.add_argument("--force", action="store_true")
     quality_report.set_defaults(func=command_create_quality_report)
+
+    style_audit = subparsers.add_parser(
+        "create-style-audit",
+        help="Create a v0.8 style audit report skeleton and optional review prompt.",
+    )
+    project_arg(style_audit)
+    style_audit.add_argument("--branch", default="main")
+    style_audit.add_argument("--chapter", required=True)
+    style_audit.add_argument("--draft", type=Path)
+    style_audit.add_argument("--context-pack", type=Path)
+    style_audit.add_argument("--style-profile", type=Path)
+    style_audit.add_argument("--voice-sheet", type=Path)
+    style_audit.add_argument("--scene-outline", type=Path)
+    style_audit.add_argument("--output", type=Path)
+    style_audit.add_argument("--prompt-output", type=Path)
+    style_audit.add_argument("--prompt", action="store_true")
+    style_audit.add_argument("--force", action="store_true")
+    style_audit.set_defaults(func=command_create_style_audit)
+
+    revision_plan = subparsers.add_parser(
+        "create-revision-plan",
+        help="Create a v0.8 revision plan from quality/style review artifacts.",
+    )
+    project_arg(revision_plan)
+    revision_plan.add_argument("--branch", default="main")
+    revision_plan.add_argument("--chapter", required=True)
+    revision_plan.add_argument("--draft", type=Path)
+    revision_plan.add_argument("--context-pack", type=Path)
+    revision_plan.add_argument("--quality-report", type=Path)
+    revision_plan.add_argument("--style-audit-report", type=Path)
+    revision_plan.add_argument("--scene-outline", type=Path)
+    revision_plan.add_argument("--output", type=Path)
+    revision_plan.add_argument("--force", action="store_true")
+    revision_plan.set_defaults(func=command_create_revision_plan)
 
     apply_patch = subparsers.add_parser("apply-patch", help="Dry-run or apply a pending patch.")
     project_arg(apply_patch)

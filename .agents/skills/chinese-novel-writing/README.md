@@ -100,8 +100,8 @@ Minimal v0.7 retrieval and audit flow:
 
 ```bash
 python .agents/skills/chinese-novel-writing/scripts/novel_project.py build-retrieval-index --project-root ./tmp/demo_novel --force
-python .agents/skills/chinese-novel-writing/scripts/novel_project.py query-retrieval-index --project-root ./tmp/demo_novel --query "protagonist antagonist ally" --branch what_if_villain_ally --top-k 10 --force
-python .agents/skills/chinese-novel-writing/scripts/novel_project.py build-context-pack --project-root ./tmp/demo_novel --branch what_if_villain_ally --task rewrite_plot --chapter 1 --user-request "what if protagonist allies with antagonist early" --use-retrieval-index --retrieval-query "protagonist antagonist ally relationship change" --retrieval-top-k 10 --write-audit --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py query-retrieval-index --project-root ./tmp/demo_novel --query "主角 反派 结盟 关系变化" --branch what_if_villain_ally --top-k 10 --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py build-context-pack --project-root ./tmp/demo_novel --branch what_if_villain_ally --task rewrite_plot --chapter 1 --user-request "如果主角提前和反派结盟，后续剧情如何重构？" --use-retrieval-index --retrieval-query "主角 反派 结盟 关系变化" --retrieval-top-k 10 --write-audit --force
 python .agents/skills/chinese-novel-writing/scripts/novel_project.py audit-context-pack --project-root ./tmp/demo_novel --context-pack context_packs/latest_context_pack.md --branch what_if_villain_ally --task rewrite_plot --chapter 1 --force
 python .agents/skills/chinese-novel-writing/scripts/novel_project.py acceptance-check --repo-root . --force
 ```
@@ -112,6 +112,38 @@ Retrieval index behavior:
 - Does not read `raw_text/full_text.txt`, `raw_text/*.txt`, or `imports/source_texts/*.txt` content.
 - Uses exact/normalized substring, entity, chapter, branch, source-type, status, and confidence weighting.
 - Produces candidate source references; it is not source of truth.
+
+## v0.8 Additions
+
+v0.8 adds style profile, character voice, scene outline, style audit, and revision plan artifacts. Scripts still only create deterministic files, prompts, and reports; they do not write prose, call external APIs, auto-revise drafts, or apply patches.
+
+New commands:
+
+- `create-style-profile`
+- `create-voice-sheet`
+- `create-scene-outline`
+- `create-style-audit`
+- `create-revision-plan`
+
+Minimal v0.8 writing-quality loop:
+
+```bash
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-style-profile --project-root ./tmp/demo_novel --branch main --genre "玄幻" --title "主线文风档案" --prompt --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-voice-sheet --project-root ./tmp/demo_novel --branch main --characters protagonist,villain,mentor --prompt --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-scene-outline --project-root ./tmp/demo_novel --branch main --chapter 1 --prompt --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py build-context-pack --project-root ./tmp/demo_novel --branch main --task continue_story --chapter 1 --user-request "主角 目标 冲突 文风" --include-style-profile --include-voice-sheet --include-scene-outline --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-draft-prompt --project-root ./tmp/demo_novel --branch main --chapter 1 --style-profile branches/main/style/style_profile.yaml --voice-sheet branches/main/style/character_voice_sheet.yaml --scene-outline branches/main/outlines/chapter_001_scene_outline.yaml --anti-ai-flavor-level high --target-length 3000 --style-strictness high --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-style-audit --project-root ./tmp/demo_novel --branch main --chapter 1 --prompt --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-revision-plan --project-root ./tmp/demo_novel --branch main --chapter 1 --force
+```
+
+Relationship between v0.8 artifacts:
+
+- `style_profile.yaml` controls prose texture and anti-AI-flavor preferences, but is not canon.
+- `character_voice_sheet.yaml` controls dialogue/voice contrast, but does not override character bible facts.
+- `chapter_XXX_scene_outline.yaml` turns the chapter function card into scene order and conflict beats.
+- `chapter_XXX_style_audit.md` complements the quality report with style, rhythm, voice, and surface-signal review.
+- `chapter_XXX_revision_plan.md` combines quality/style findings into a revision prompt before any manual rewrite.
 
 Minimal v0.5 writing-quality flow:
 

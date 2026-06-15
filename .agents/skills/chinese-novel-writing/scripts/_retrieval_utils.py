@@ -274,13 +274,17 @@ def listify_metadata(data: dict[str, object], key: str) -> list[str]:
     return parse_list_value(data.get(key, []))
 
 
+def metadata_value_present(value: object) -> bool:
+    return value not in ("", None) and value != []
+
+
 def build_entry(project: Path, path: Path) -> dict[str, object]:
     rel = safe_relative(path, project).replace("\\", "/")
     source_type = source_type_for(rel)
     text = read_text_limited(path)
     frontmatter, body = extract_frontmatter(text)
     metadata = parse_yamlish_metadata(text)
-    metadata.update({key: value for key, value in frontmatter.items() if value not in {"", []}})
+    metadata.update({key: value for key, value in frontmatter.items() if metadata_value_present(value)})
     title = str(metadata.get("title") or metadata.get("name") or first_heading(body) or path.stem)
     summary = str(metadata.get("summary") or short_markdown_summary(body if body else text))
     if len(summary) > 600:

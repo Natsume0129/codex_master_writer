@@ -10,7 +10,16 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
-BRANCH_DIRS = ["chapter_summaries", "chapter_function_cards", "drafts", "reviews", "rewrite"]
+BRANCH_DIRS = [
+    "chapter_summaries",
+    "chapter_function_cards",
+    "drafts",
+    "reviews",
+    "rewrite",
+    "style",
+    "outlines",
+    "revision",
+]
 BRANCH_TEXT_FILES = {
     "outline.md": "# Branch Outline\n\n剧情重构分支大纲，基于 divergence_analysis 重新生成。\n",
     "volume_outline.md": "# Branch Volume Outline\n\n待填写。\n",

@@ -12,7 +12,7 @@ from pathlib import Path
 from _novel_utils import parse_mapping_list, parse_progress
 
 
-CURRENT_SCHEMA_VERSION = "0.7"
+CURRENT_SCHEMA_VERSION = "0.8"
 
 REQUIRED_DIRS = [
     "raw_text",
@@ -295,7 +295,18 @@ def check_context_pack_size(project: Path, warnings: list[str]) -> None:
         if context_pack.stat().st_size > 60_000:
             warnings.append(f"context pack may exceed budget: {context_pack.relative_to(project)}")
         text = read_text(context_pack)
-        if "raw_text/full_text.txt" in text or "raw_text\\full_text.txt" in text:
+        raw_reference_lines = [
+            line
+            for line in text.splitlines()
+            if "raw_text/full_text.txt" in line or "raw_text\\full_text.txt" in line
+        ]
+        risky_raw_references = []
+        for line in raw_reference_lines:
+            lowered = line.lower()
+            if "do not" in lowered or "forbid" in lowered or "rule:" in lowered:
+                continue
+            risky_raw_references.append(line)
+        if risky_raw_references:
             warnings.append(f"context pack references raw_text/full_text.txt: {context_pack.relative_to(project)}")
         if not full_text.exists():
             continue
@@ -464,6 +475,141 @@ def check_quality_workflow_suggestions(project: Path, suggestions: list[str]) ->
         suggestions.append("pending patches exist; run review-patch, then apply-patch without --confirm for a dry run")
 
 
+def chapter_label_from_function_card(path: Path) -> str:
+    stem = path.stem
+    return stem.removesuffix("_function_card")
+
+
+def context_pack_has_writing_controls(path: Path, controls: tuple[str, ...]) -> bool:
+    if not path.exists() or not path.is_file():
+        return False
+    text = read_text(path).lower()
+    aliases = {
+        "style": ("style profile", "style_profile", "style_profile_source"),
+        "voice": (
+            "character voice sheet",
+            "character_voice_sheet",
+            "character_voice_sheet_source",
+        ),
+        "scene": ("scene outline", "scene_outline", "scene_outline_source"),
+    }
+    return all(any(alias in text for alias in aliases[control]) for control in controls)
+
+
+def draft_prompt_context_pack(project: Path, prompt: Path) -> Path:
+    text = read_text(prompt)
+    match = re.search(r"^\s*context_pack\s*:\s*(.*?)\s*$", text, flags=re.MULTILINE)
+    if not match:
+        return project / "context_packs" / "latest_context_pack.md"
+    raw = match.group(1).strip().strip('"').strip("'").strip("`")
+    return resolve_project_path(project, raw) if raw else project / "context_packs" / "latest_context_pack.md"
+
+
+def style_artifact_has_large_samples(path: Path) -> bool:
+    if not path.exists() or not path.is_file():
+        return False
+    text = read_text(path)
+    if len(text) > 40_000:
+        return True
+    sample_keys = ("sample", "samples", "example", "examples", "示例", "样例", "样本")
+    if not any(key in text.lower() for key in sample_keys[:4]) and not any(
+        key in text for key in sample_keys[4:]
+    ):
+        return False
+    return len(text) > 12_000 or bool(re.search(r"(?im)^\s*(sample|samples|example|examples)\s*:\s*\|", text))
+
+
+def check_style_voice_revision_suggestions(
+    project: Path, warnings: list[str], suggestions: list[str]
+) -> None:
+    branches_dir = project / "branches"
+    if not branches_dir.exists():
+        return
+
+    for branch_dir in sorted(item for item in branches_dir.iterdir() if item.is_dir()):
+        branch = branch_dir.name
+        style_profile = branch_dir / "style" / "style_profile.yaml"
+        voice_sheet = branch_dir / "style" / "character_voice_sheet.yaml"
+
+        if branch == "main" or any((branch_dir / name).exists() for name in ("drafts", "reviews", "chapter_function_cards")):
+            if not style_profile.exists():
+                suggestions.append(
+                    f"branch {branch} missing style/style_profile.yaml; run create-style-profile --branch {branch}"
+                )
+            if not voice_sheet.exists():
+                suggestions.append(
+                    f"branch {branch} missing style/character_voice_sheet.yaml; run create-voice-sheet --branch {branch}"
+                )
+
+        for artifact in (style_profile, voice_sheet):
+            if not artifact.exists():
+                continue
+            if style_artifact_has_large_samples(artifact):
+                warnings.append(
+                    f"{artifact.relative_to(project)} may store large sample text; keep style evidence short and source-bounded"
+                )
+            missing_fact_fields = [
+                field for field in ("source:", "status:", "confidence:") if field not in read_text(artifact)
+            ]
+            if missing_fact_fields:
+                suggestions.append(
+                    f"{artifact.relative_to(project)} is missing visible traceability fields: {', '.join(missing_fact_fields)}"
+                )
+
+        for card in sorted((branch_dir / "chapter_function_cards").glob("*_function_card.yaml")):
+            label = chapter_label_from_function_card(card)
+            outline = branch_dir / "outlines" / f"{label}_scene_outline.yaml"
+            if not outline.exists():
+                suggestions.append(
+                    f"function card {card.relative_to(project)} has no scene outline; run create-scene-outline --branch {branch} --chapter {label}"
+                )
+
+        reviews_dir = branch_dir / "reviews"
+        for draft_dir in (branch_dir / "drafts",):
+            if not draft_dir.exists():
+                continue
+            for draft in sorted(path for path in draft_dir.iterdir() if path.is_file() and not path.name.startswith(".")):
+                style_audit = reviews_dir / f"{draft.stem}_style_audit.md"
+                if not style_audit.exists():
+                    suggestions.append(
+                        f"draft {draft.relative_to(project)} has no style audit; run create-style-audit --branch {branch} --chapter {draft.stem}"
+                    )
+
+        if reviews_dir.exists():
+            review_sources = list(reviews_dir.glob("*_quality_report.md")) + list(
+                reviews_dir.glob("*_style_audit.md")
+            )
+            revision_seen: set[str] = set()
+            for review in sorted(review_sources):
+                label = review.stem
+                label = label.removesuffix("_quality_report").removesuffix("_style_audit")
+                if label in revision_seen:
+                    continue
+                revision_seen.add(label)
+                revision = branch_dir / "revision" / f"{label}_revision_plan.md"
+                if not revision.exists():
+                    suggestions.append(
+                        f"review {review.relative_to(project)} has no revision plan; run create-revision-plan --branch {branch} --chapter {label}"
+                    )
+
+        for prompt in sorted((branch_dir / "draft_prompts").glob("*_draft_prompt.md")):
+            text = read_text(prompt).lower()
+            requested: list[str] = []
+            if "style_profile_status: present" in text or re.search(r"^style_profile:\s*\S+", text, flags=re.MULTILINE):
+                requested.append("style")
+            if "character_voice_sheet_status: present" in text or re.search(
+                r"^character_voice_sheet:\s*\S+", text, flags=re.MULTILINE
+            ):
+                requested.append("voice")
+            if not requested:
+                continue
+            context_pack = draft_prompt_context_pack(project, prompt)
+            if not context_pack_has_writing_controls(context_pack, tuple(requested)):
+                warnings.append(
+                    f"draft prompt {prompt.relative_to(project)} uses style/voice artifacts but context pack lacks matching writing-control sections"
+                )
+
+
 def check_rewrite_workflow_suggestions(project: Path, suggestions: list[str]) -> None:
     branches_dir = project / "branches"
     if not branches_dir.exists():
@@ -600,6 +746,7 @@ def validate_project(project: Path) -> tuple[list[str], list[str], list[str]]:
     check_chunk_manifest(project, errors, warnings)
     check_extraction_progress(project, errors, warnings, suggestions)
     check_quality_workflow_suggestions(project, suggestions)
+    check_style_voice_revision_suggestions(project, warnings, suggestions)
     check_rewrite_workflow_suggestions(project, suggestions)
     check_retrieval_and_audit_suggestions(project, warnings, suggestions)
     check_skill_frontmatter(warnings, suggestions)
@@ -626,7 +773,7 @@ def print_section(title: str, items: list[str]) -> None:
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Validate a novel project structure and v0.5 workflow schemas.")
+    parser = argparse.ArgumentParser(description="Validate a novel project structure and workflow schemas.")
     parser.add_argument("--project", required=True, type=Path, help="Novel project root.")
     return parser.parse_args(argv)
 

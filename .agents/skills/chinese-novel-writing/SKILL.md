@@ -28,7 +28,8 @@ Map each request to the nearest workflow in `references/workflows.md`. If the re
 - `index_builder`: rebuild lightweight navigation indexes from extracted cards and canon files; indexes are not source of truth.
 - `retrieval_index_pipeline`: build/query v0.7 retrieval candidates from structured artifacts only, then audit context packs for traceability and budget.
 - `context_pack_builder`: assemble only task-relevant facts, summaries, and constraints.
-- `drafting_pipeline`: generate a draft prompt from the chapter function card and context pack, write only after model review, then run quality checks.
+- `style_voice_pipeline`: create v0.8 style profile, character voice sheet, scene outline, style audit, and revision plan artifacts without writing prose.
+- `drafting_pipeline`: generate a draft prompt from the chapter function card, context pack, and optional v0.8 style/voice/scene artifacts; write only after model review, then run quality checks.
 - `continuation_pipeline`: continue only after branch and recent context are known.
 - `plot_rewrite_pipeline`: create or use an alternate branch, then generate v0.6 plot-node, divergence-analysis, rewrite-plan, and branch-diff artifacts before changing causal development.
 - `post_write_update_pipeline`: generate pending patch files instead of directly editing bible files.
@@ -46,6 +47,7 @@ Map each request to the nearest workflow in `references/workflows.md`. If the re
 7. Do not automatically decide major plot changes: core character death, betrayal, confirmed romance, early secret reveals, final antagonist identity, world-rule reversal, main-goal changes, original-mainline rewrites, or branch merges.
 8. Do not overwrite user source text. Preserve raw imports and keep generated changes separate unless the user explicitly approves a write target.
 9. Retrieval indexes are candidate navigation aids only. They must not replace canon, extracted cards, branch artifacts, or pending patches.
+10. Style profiles and character voice sheets are writing controls, not source-of-truth fact stores. They must not override canon, branch facts, chapter function cards, or context packs.
 
 ## Reference Loading
 
@@ -58,6 +60,7 @@ Load only the reference needed for the current task:
 - Drafting, continuation, review, or rewrite context: `references/context_pack.md`.
 - Retrieval index, query reports, context audits, or acceptance checks: `references/retrieval_index.md`.
 - Chapter goal planning before drafting: `references/chapter_function_card.md`.
+- Style profile, character voice, scene outline, style audit, or revision loop: `references/style_voice_system.md`.
 - Alternate plot or branch work: `references/branch_system.md`.
 - Plot rewrite divergence analysis: `references/plot_rewrite_intelligence.md`.
 - Post-write database updates: `references/patch_update.md`.
@@ -68,9 +71,9 @@ Load only the reference needed for the current task:
 
 ## Script Usage
 
-Use `scripts/novel_project.py` as the preferred v0.7 unified CLI for deterministic file work. Use lower-level scripts only when fine-grained control is needed.
+Use `scripts/novel_project.py` as the preferred v0.8 unified CLI for deterministic file work. Use lower-level scripts only when fine-grained control is needed.
 
-- `scripts/novel_project.py` exposes `init`, `split-import`, `init-progress`, `create-batch`, `import-status`, `create-chapter-card-batch`, `create-volume-summary-batch`, `create-bible-patch-batch`, `mark-done`, `build-indexes`, `build-retrieval-index`, `query-retrieval-index`, `new-branch`, `create-function-card`, `build-context-pack`, `audit-context-pack`, `acceptance-check`, `create-draft-prompt`, `create-plot-node-map`, `create-divergence-analysis`, `create-rewrite-plan`, `create-branch-diff-report`, `create-quality-report`, `create-patch`, `review-patch`, `create-patch-review`, `apply-patch`, and `validate`.
+- `scripts/novel_project.py` exposes `init`, `split-import`, `init-progress`, `create-batch`, `import-status`, `create-chapter-card-batch`, `create-volume-summary-batch`, `create-bible-patch-batch`, `mark-done`, `build-indexes`, `build-retrieval-index`, `query-retrieval-index`, `new-branch`, `create-function-card`, `build-context-pack`, `audit-context-pack`, `acceptance-check`, `create-style-profile`, `create-voice-sheet`, `create-scene-outline`, `create-draft-prompt`, `create-style-audit`, `create-revision-plan`, `create-plot-node-map`, `create-divergence-analysis`, `create-rewrite-plan`, `create-branch-diff-report`, `create-quality-report`, `create-patch`, `review-patch`, `create-patch-review`, `apply-patch`, and `validate`.
 - `scripts/init_project.py` creates a project from templates.
 - `scripts/split_chapters.py` splits imported text and writes an import manifest.
 - `scripts/split_chunks.py` splits chapter files into overlapping chunks and writes a chunk manifest.
@@ -92,9 +95,14 @@ Use `scripts/novel_project.py` as the preferred v0.7 unified CLI for determinist
 - `scripts/create_rewrite_plan.py` creates a v0.6 rewrite-plan prompt and replacement-route skeleton.
 - `scripts/create_branch_diff_report.py` creates a v0.6 branch diff report for user review.
 - `scripts/create_chapter_function_card.py` creates branch-local v0.5 chapter function cards.
-- `scripts/build_context_pack.py` creates a context-pack skeleton without reading full raw text; `--auto-select` can fill selectors from indexes and chapter/recent hints, and `--use-retrieval-index` can add a v0.7 Retrieval Trace.
-- `scripts/create_draft_prompt.py` creates a drafting prompt from the context pack and chapter function card without writing prose; `--target-length` and `--style-strictness` are prompt controls only.
+- `scripts/create_style_profile.py` creates a v0.8 style profile skeleton and optional prompt.
+- `scripts/create_voice_sheet.py` creates a v0.8 character voice sheet skeleton and optional prompt.
+- `scripts/create_scene_outline.py` creates a v0.8 scene outline skeleton and optional prompt.
+- `scripts/build_context_pack.py` creates a context-pack skeleton without reading full raw text; `--auto-select` can fill selectors from indexes and chapter/recent hints, `--use-retrieval-index` can add a v0.7 Retrieval Trace, and v0.8 flags can include bounded style/voice/scene artifacts.
+- `scripts/create_draft_prompt.py` creates a drafting prompt from the context pack, chapter function card, and optional v0.8 style/voice/scene/revision artifacts without writing prose; `--target-length`, `--style-strictness`, and `--anti-ai-flavor-level` are prompt controls only.
 - `scripts/create_quality_report.py` creates a review template and can create a review prompt under `branches/<branch>/reviews/`.
+- `scripts/create_style_audit.py` creates a v0.8 style audit report skeleton and optional prompt.
+- `scripts/create_revision_plan.py` creates a v0.8 revision plan and embedded revision prompt.
 - `scripts/create_patch.py` creates pending post-write update patches.
 - `scripts/create_patch_review.py` creates human-readable patch review reports before patch apply. Prefer `review-patch`; `create-patch-review` remains compatible.
 - `scripts/apply_patch.py` dry-runs and then applies limited safe patch updates after confirmation.

@@ -47,8 +47,8 @@ Typical v0.7 flow:
 
 ```bash
 python scripts/novel_project.py build-retrieval-index --project-root ./projects/my-novel --include-branches --force
-python scripts/novel_project.py query-retrieval-index --project-root ./projects/my-novel --query "chapter 12 ally reveal" --branch main --top-k 10 --force
-python scripts/novel_project.py build-context-pack --project-root ./projects/my-novel --branch main --task continue_story --chapter 12 --use-retrieval-index --retrieval-query "chapter 12 ally reveal" --retrieval-top-k 10 --write-audit --force
+python scripts/novel_project.py query-retrieval-index --project-root ./projects/my-novel --query "第十二章 盟友 揭示 关系变化" --branch main --top-k 10 --force
+python scripts/novel_project.py build-context-pack --project-root ./projects/my-novel --branch main --task continue_story --chapter 12 --use-retrieval-index --retrieval-query "第十二章 盟友 揭示 关系变化" --retrieval-top-k 10 --write-audit --force
 ```
 
 The pack may include a `## Retrieval Trace` section with:
@@ -65,6 +65,22 @@ The trace is not source truth. It points Codex/model to source files that still 
 `--context-budget-chars` is used by audit only. If the budget is exceeded, the audit reports a warning; it does not silently delete user-selected context.
 
 `audit-context-pack` checks budget, raw-text path references, possible raw full-text inclusion by size, branch boundaries, missing source/status/confidence markers, deprecated facts, oversized sections, and missing Retrieval Trace. It does not read `raw_text/full_text.txt` content.
+
+## v0.8 Writing Control Artifacts
+
+`build-context-pack` can include bounded style/voice/scene artifacts when explicitly requested:
+
+```bash
+python scripts/novel_project.py build-context-pack --project-root ./projects/my-novel --branch main --task continue_story --chapter 12 --include-style-profile --include-voice-sheet --include-scene-outline --force
+```
+
+Optional explicit paths:
+
+- `--style-profile branches/main/style/style_profile.yaml`
+- `--voice-sheet branches/main/style/character_voice_sheet.yaml`
+- `--scene-outline branches/main/outlines/chapter_012_scene_outline.yaml`
+
+These sections are controls for drafting and review. They are not canon and do not replace source-tracked facts. If a writing-control artifact conflicts with canon, branch facts, the function card, or the context pack, record the conflict and follow the source-tracked artifact.
 
 ## Default Structure
 
@@ -87,6 +103,13 @@ context_pack:
     current_chapter_goal: ""
     chapter_goal: ""
     chapter_function_card: ""
+  writing_control_artifacts:
+    style_profile_source: ""
+    style_profile: ""
+    character_voice_sheet_source: ""
+    character_voice_sheet: ""
+    scene_outline_source: ""
+    scene_outline: ""
   recent_context:
     previous_chapter_summaries: []
     previous_chapter_ending_excerpt: ""
@@ -142,8 +165,9 @@ If context is too large, keep items in this order:
 6. Relevant characters, places, items, and relationships.
 7. Relevant foreshadowing and open questions.
 8. Timeline and hard constraints.
-9. Style guide summary.
-10. Older source evidence snippets.
+9. Requested v0.8 writing-control artifacts.
+10. Style guide summary.
+11. Older source evidence snippets.
 
 ## Continuation Context
 

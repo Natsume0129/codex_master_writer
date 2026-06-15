@@ -12,7 +12,7 @@ python .agents/skills/chinese-novel-writing/scripts/novel_project.py <subcommand
 
 Use lower-level scripts only when a task needs fine-grained control or direct compatibility with an existing workflow.
 
-Supported v0.7 subcommands:
+Supported v0.8 subcommands:
 
 - `init`
 - `split-import`
@@ -31,7 +31,12 @@ Supported v0.7 subcommands:
 - `build-context-pack`
 - `audit-context-pack`
 - `acceptance-check`
+- `create-style-profile`
+- `create-voice-sheet`
+- `create-scene-outline`
 - `create-draft-prompt`
+- `create-style-audit`
+- `create-revision-plan`
 - `create-plot-node-map`
 - `create-divergence-analysis`
 - `create-rewrite-plan`
@@ -125,8 +130,8 @@ For retrieval-index assisted context selection, use:
 
 ```bash
 python .agents/skills/chinese-novel-writing/scripts/novel_project.py build-retrieval-index --project-root ./projects/my-novel --include-branches --force
-python .agents/skills/chinese-novel-writing/scripts/novel_project.py query-retrieval-index --project-root ./projects/my-novel --query "chapter 12 continuation context" --branch main --chapter 12 --top-k 10 --force
-python .agents/skills/chinese-novel-writing/scripts/novel_project.py build-context-pack --project-root ./projects/my-novel --branch main --task continue_story --chapter 12 --use-retrieval-index --retrieval-query "chapter 12 continuation context" --write-audit --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py query-retrieval-index --project-root ./projects/my-novel --query "第十二章 续写 目标 冲突 文风" --branch main --chapter 12 --top-k 10 --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py build-context-pack --project-root ./projects/my-novel --branch main --task continue_story --chapter 12 --use-retrieval-index --retrieval-query "第十二章 续写 目标 冲突 文风" --write-audit --force
 ```
 
 User request example:
@@ -144,6 +149,25 @@ python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-draf
 ```
 
 The prompt references the context pack and chapter function card. The script does not write the chapter body. `--target-length` is a target character count, not a hard cutoff. `--style-strictness` accepts `low`, `medium`, or `high`; default is `medium`.
+
+For v0.8 style, voice, scene outline, and revision-loop controls:
+
+```bash
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-style-profile --project-root ./projects/my-novel --branch main --genre "玄幻" --title "主线文风档案" --prompt --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-voice-sheet --project-root ./projects/my-novel --branch main --characters protagonist,villain,mentor --prompt --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-scene-outline --project-root ./projects/my-novel --branch main --chapter 12 --prompt --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py build-context-pack --project-root ./projects/my-novel --branch main --task continue_story --chapter 12 --include-style-profile --include-voice-sheet --include-scene-outline --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-draft-prompt --project-root ./projects/my-novel --branch main --chapter 12 --style-profile branches/main/style/style_profile.yaml --voice-sheet branches/main/style/character_voice_sheet.yaml --scene-outline branches/main/outlines/chapter_012_scene_outline.yaml --anti-ai-flavor-level high --target-length 3000 --style-strictness high --force
+```
+
+After a draft exists, create the style audit and revision plan:
+
+```bash
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-style-audit --project-root ./projects/my-novel --branch main --chapter 12 --prompt --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-revision-plan --project-root ./projects/my-novel --branch main --chapter 12 --force
+```
+
+These helpers create prompts, reports, and planning files only. They do not write prose, revise the chapter, or apply patches.
 
 Create a quality report template after drafting or before detailed review:
 
@@ -168,7 +192,7 @@ python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-qual
 Example user request:
 
 ```text
-Based on chapter 12 of main, if the protagonist does not kill the antagonist and instead forms an alliance, create a divergent branch and analyze downstream plot impact.
+基于 main 第十二章，如果主角不杀反派而是暂时结盟，请创建分歧分支并分析后续剧情影响。
 ```
 
 Create an isolated branch for what-if or divergence requests:
@@ -183,8 +207,8 @@ Then build context and rewrite artifacts:
 
 ```bash
 python .agents/skills/chinese-novel-writing/scripts/novel_project.py build-retrieval-index --project-root ./projects/my-novel --include-branches --force
-python .agents/skills/chinese-novel-writing/scripts/novel_project.py query-retrieval-index --project-root ./projects/my-novel --query "protagonist antagonist alliance relationship change" --branch villain-ally --top-k 10 --force
-python .agents/skills/chinese-novel-writing/scripts/novel_project.py build-context-pack --project-root ./projects/my-novel --branch villain-ally --task rewrite_plot --chapter 12 --user-request "protagonist allies with antagonist instead of killing them" --use-retrieval-index --retrieval-query "protagonist antagonist alliance relationship change" --write-audit --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py query-retrieval-index --project-root ./projects/my-novel --query "主角 反派 结盟 关系变化" --branch villain-ally --top-k 10 --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py build-context-pack --project-root ./projects/my-novel --branch villain-ally --task rewrite_plot --chapter 12 --user-request "主角不杀反派而是暂时结盟" --use-retrieval-index --retrieval-query "主角 反派 结盟 关系变化" --write-audit --force
 python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-plot-node-map --project-root ./projects/my-novel --branch villain-ally --force
 python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-divergence-analysis --project-root ./projects/my-novel --branch villain-ally --impact-radius level_2_relationship --force
 python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-rewrite-plan --project-root ./projects/my-novel --branch villain-ally --force

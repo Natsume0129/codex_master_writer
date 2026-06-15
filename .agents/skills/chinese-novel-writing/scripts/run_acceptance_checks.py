@@ -122,7 +122,7 @@ def render_report(
 ) -> str:
     status = "fail" if failures or pollution_failures or raw_marker_found else ("warn" if warnings else "pass")
     return f"""---
-schema_version: {yaml_quote("0.7")}
+schema_version: {yaml_quote("0.8")}
 report_type: {yaml_quote("acceptance_report")}
 generated_at: {yaml_quote(now_iso())}
 status: {yaml_quote(status)}
@@ -154,7 +154,7 @@ python: {yaml_quote(sys.executable)}
 ## Compatibility Checks
 
 - Unified CLI help was executed.
-- v0.5, v0.6, and v0.7 flows are included unless skipped by CLI flags.
+- v0.5, v0.6, v0.7, and v0.8 flows are included unless skipped by CLI flags.
 
 ## v0.5 Flow
 
@@ -180,6 +180,16 @@ python: {yaml_quote(sys.executable)}
 - query-retrieval-index
 - build-context-pack --use-retrieval-index --write-audit
 - audit-context-pack
+
+## v0.8 Flow
+
+- create-style-profile --prompt
+- create-voice-sheet --prompt
+- create-scene-outline --prompt
+- build-context-pack --include-style-profile --include-voice-sheet --include-scene-outline
+- create-draft-prompt --style-profile --voice-sheet --scene-outline --anti-ai-flavor-level
+- create-style-audit --prompt
+- create-revision-plan
 
 ## Raw Text Safety Checks
 
@@ -212,6 +222,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--skip-v05", action="store_true")
     parser.add_argument("--skip-v06", action="store_true")
     parser.add_argument("--skip-v07", action="store_true")
+    parser.add_argument("--skip-v08", action="store_true")
     parser.add_argument("--output", type=Path)
     parser.add_argument("--force", action="store_true")
     return parser.parse_args(argv)
@@ -268,20 +279,29 @@ def main(argv: list[str] | None = None) -> int:
             append_run(runs, repo_root, [sys.executable, str(cli), "create-patch", "--project-root", str(project), "--branch", "main", "--chapter", "1", "--force"], failures)
             append_run(runs, repo_root, [sys.executable, str(cli), "review-patch", "--project-root", str(project), "--patch", "pending_updates/chapter_001_patch.yaml", "--force"], failures)
 
+        if not args.skip_v08:
+            append_run(runs, repo_root, [sys.executable, str(cli), "create-style-profile", "--project-root", str(project), "--branch", "main", "--genre", "玄幻", "--title", "主线文风档案", "--context-pack", "context_packs/latest_context_pack.md", "--prompt", "--force"], failures)
+            append_run(runs, repo_root, [sys.executable, str(cli), "create-voice-sheet", "--project-root", str(project), "--branch", "main", "--characters", "protagonist,villain,mentor", "--context-pack", "context_packs/latest_context_pack.md", "--prompt", "--force"], failures)
+            append_run(runs, repo_root, [sys.executable, str(cli), "create-scene-outline", "--project-root", str(project), "--branch", "main", "--chapter", "1", "--title", "第一章", "--context-pack", "context_packs/latest_context_pack.md", "--prompt", "--force"], failures)
+            append_run(runs, repo_root, [sys.executable, str(cli), "build-context-pack", "--project-root", str(project), "--branch", "main", "--task", "continue_story", "--chapter", "1", "--user-request", "主角 目标 冲突 文风", "--include-style-profile", "--include-voice-sheet", "--include-scene-outline", "--force"], failures)
+            append_run(runs, repo_root, [sys.executable, str(cli), "create-draft-prompt", "--project-root", str(project), "--branch", "main", "--chapter", "1", "--style-profile", "branches/main/style/style_profile.yaml", "--voice-sheet", "branches/main/style/character_voice_sheet.yaml", "--scene-outline", "branches/main/outlines/chapter_001_scene_outline.yaml", "--anti-ai-flavor-level", "high", "--target-length", "3000", "--style-strictness", "high", "--force"], failures)
+            append_run(runs, repo_root, [sys.executable, str(cli), "create-style-audit", "--project-root", str(project), "--branch", "main", "--chapter", "1", "--context-pack", "context_packs/latest_context_pack.md", "--prompt", "--force"], failures)
+            append_run(runs, repo_root, [sys.executable, str(cli), "create-revision-plan", "--project-root", str(project), "--branch", "main", "--chapter", "1", "--context-pack", "context_packs/latest_context_pack.md", "--force"], failures)
+
         baseline = snapshot([project / "canon", project / "branches" / "main"], project)
 
         if not args.skip_v06:
-            append_run(runs, repo_root, [sys.executable, str(cli), "new-branch", "--project-root", str(project), "--name", "what_if_villain_ally", "--title", "villain ally branch", "--divergence", "protagonist allies with antagonist early", "--inherit", "skeleton", "--force"], failures)
-            append_run(runs, repo_root, [sys.executable, str(cli), "build-context-pack", "--project-root", str(project), "--branch", "what_if_villain_ally", "--task", "rewrite_plot", "--chapter", "1", "--user-request", "what if protagonist allies with antagonist early", "--force"], failures)
+            append_run(runs, repo_root, [sys.executable, str(cli), "new-branch", "--project-root", str(project), "--name", "what_if_villain_ally", "--title", "反派成为盟友线", "--divergence", "主角提前和反派结盟", "--inherit", "skeleton", "--force"], failures)
+            append_run(runs, repo_root, [sys.executable, str(cli), "build-context-pack", "--project-root", str(project), "--branch", "what_if_villain_ally", "--task", "rewrite_plot", "--chapter", "1", "--user-request", "如果主角提前和反派结盟，后续剧情如何重构？", "--force"], failures)
             append_run(runs, repo_root, [sys.executable, str(cli), "create-plot-node-map", "--project-root", str(project), "--branch", "what_if_villain_ally", "--force"], failures)
-            append_run(runs, repo_root, [sys.executable, str(cli), "create-divergence-analysis", "--project-root", str(project), "--branch", "what_if_villain_ally", "--divergence", "protagonist allies with antagonist early", "--impact-radius", "level_2_relationship", "--force"], failures)
+            append_run(runs, repo_root, [sys.executable, str(cli), "create-divergence-analysis", "--project-root", str(project), "--branch", "what_if_villain_ally", "--divergence", "主角提前和反派结盟", "--impact-radius", "level_2_relationship", "--force"], failures)
             append_run(runs, repo_root, [sys.executable, str(cli), "create-rewrite-plan", "--project-root", str(project), "--branch", "what_if_villain_ally", "--force"], failures)
             append_run(runs, repo_root, [sys.executable, str(cli), "create-branch-diff-report", "--project-root", str(project), "--branch", "what_if_villain_ally", "--force"], failures)
 
         if not args.skip_v07:
             append_run(runs, repo_root, [sys.executable, str(cli), "build-retrieval-index", "--project-root", str(project), "--include-branches", "--force"], failures)
-            append_run(runs, repo_root, [sys.executable, str(cli), "query-retrieval-index", "--project-root", str(project), "--query", "protagonist antagonist ally", "--branch", "what_if_villain_ally", "--top-k", "10", "--force"], failures)
-            append_run(runs, repo_root, [sys.executable, str(cli), "build-context-pack", "--project-root", str(project), "--branch", "what_if_villain_ally", "--task", "rewrite_plot", "--chapter", "1", "--user-request", "what if protagonist allies with antagonist early", "--use-retrieval-index", "--retrieval-query", "protagonist antagonist ally", "--retrieval-top-k", "10", "--write-audit", "--force"], failures)
+            append_run(runs, repo_root, [sys.executable, str(cli), "query-retrieval-index", "--project-root", str(project), "--query", "主角 反派 结盟 关系变化", "--branch", "what_if_villain_ally", "--top-k", "10", "--force"], failures)
+            append_run(runs, repo_root, [sys.executable, str(cli), "build-context-pack", "--project-root", str(project), "--branch", "what_if_villain_ally", "--task", "rewrite_plot", "--chapter", "1", "--user-request", "如果主角提前和反派结盟，后续剧情如何重构？", "--use-retrieval-index", "--retrieval-query", "主角 反派 结盟 关系变化", "--retrieval-top-k", "10", "--write-audit", "--force"], failures)
             append_run(runs, repo_root, [sys.executable, str(cli), "audit-context-pack", "--project-root", str(project), "--context-pack", "context_packs/latest_context_pack.md", "--branch", "what_if_villain_ally", "--task", "rewrite_plot", "--chapter", "1", "--force"], failures)
 
         append_run(runs, repo_root, [sys.executable, str(cli), "validate", "--project-root", str(project)], failures)
@@ -299,6 +319,16 @@ def main(argv: list[str] | None = None) -> int:
         project / "indexes" / "retrieval_query_report.md",
         project / "context_packs" / "latest_context_pack.md",
         project / "context_packs" / "latest_context_pack_audit.md",
+        project / "branches" / "main" / "style" / "style_profile.yaml",
+        project / "branches" / "main" / "style" / "style_profile_prompt.md",
+        project / "branches" / "main" / "style" / "character_voice_sheet.yaml",
+        project / "branches" / "main" / "style" / "voice_sheet_prompt.md",
+        project / "branches" / "main" / "outlines" / "chapter_001_scene_outline.yaml",
+        project / "branches" / "main" / "outlines" / "chapter_001_scene_outline_prompt.md",
+        project / "branches" / "main" / "draft_prompts" / "chapter_001_draft_prompt.md",
+        project / "branches" / "main" / "reviews" / "chapter_001_style_audit.md",
+        project / "branches" / "main" / "reviews" / "chapter_001_style_audit_prompt.md",
+        project / "branches" / "main" / "revision" / "chapter_001_revision_plan.md",
         project / "branches" / "what_if_villain_ally" / "rewrite" / "plot_node_map.yaml",
         project / "branches" / "what_if_villain_ally" / "rewrite" / "divergence_analysis.yaml",
         project / "branches" / "what_if_villain_ally" / "rewrite" / "rewrite_plan_prompt.md",

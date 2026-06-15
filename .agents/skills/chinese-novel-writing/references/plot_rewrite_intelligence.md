@@ -99,8 +99,8 @@ Files:
 ## Commands
 
 ```bash
-python scripts/novel_project.py new-branch --project-root ./projects/my-novel --name what_if_villain_ally --divergence "protagonist allies with antagonist early" --inherit skeleton --force
-python scripts/novel_project.py build-context-pack --project-root ./projects/my-novel --branch what_if_villain_ally --task rewrite_plot --chapter 12 --force
+python scripts/novel_project.py new-branch --project-root ./projects/my-novel --name what_if_villain_ally --divergence "主角提前和反派结盟" --inherit skeleton --force
+python scripts/novel_project.py build-context-pack --project-root ./projects/my-novel --branch what_if_villain_ally --task rewrite_plot --chapter 12 --user-request "如果主角提前和反派结盟，后续剧情如何重构？" --force
 python scripts/novel_project.py create-plot-node-map --project-root ./projects/my-novel --branch what_if_villain_ally --force
 python scripts/novel_project.py create-divergence-analysis --project-root ./projects/my-novel --branch what_if_villain_ally --impact-radius level_2_relationship --force
 python scripts/novel_project.py create-rewrite-plan --project-root ./projects/my-novel --branch what_if_villain_ally --force

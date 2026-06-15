@@ -11,6 +11,11 @@ from pathlib import Path
 
 from _novel_utils import chapter_label_candidates
 from _retrieval_utils import load_index, query_entries, resolve_project_relative, selector_lines
+from _style_voice_utils import (
+    default_scene_outline,
+    default_style_profile,
+    default_voice_sheet,
+)
 
 
 HEAD_LIMIT = 3000
@@ -556,6 +561,8 @@ def collect_context(args: argparse.Namespace) -> tuple[dict[str, str | list[str]
     else:
         retrieval_notes.append(f"chapter_function_card: loaded {card_source}")
 
+    collect_style_voice_sections(project, args, context, missing, retrieval_notes)
+
     context["auto_selector_sources"] = []
     context["auto_selector_notes"] = []
     if args.auto_select:
@@ -623,6 +630,67 @@ def collect_context(args: argparse.Namespace) -> tuple[dict[str, str | list[str]
     context["retrieval_notes"] = retrieval_notes
     collect_retrieval_trace(project, args, context, missing, retrieval_notes)
     return context, sorted(set(missing))
+
+
+def collect_style_voice_sections(
+    project: Path,
+    args: argparse.Namespace,
+    context: dict[str, str | list[str]],
+    missing: list[str],
+    retrieval_notes: list[str],
+) -> None:
+    context["style_profile"] = ""
+    context["style_profile_source"] = ""
+    context["character_voice_sheet"] = ""
+    context["character_voice_sheet_source"] = ""
+    context["scene_outline"] = ""
+    context["scene_outline_source"] = ""
+
+    chapter = chapter_label(args.chapter)
+    items = [
+        (
+            "style_profile",
+            "style_profile_source",
+            args.include_style_profile or args.style_profile is not None,
+            resolve_project_relative(project, args.style_profile)
+            if args.style_profile
+            else default_style_profile(project, args.branch),
+            5000,
+        ),
+        (
+            "character_voice_sheet",
+            "character_voice_sheet_source",
+            args.include_voice_sheet or args.voice_sheet is not None,
+            resolve_project_relative(project, args.voice_sheet)
+            if args.voice_sheet
+            else default_voice_sheet(project, args.branch),
+            5000,
+        ),
+        (
+            "scene_outline",
+            "scene_outline_source",
+            args.include_scene_outline or args.scene_outline is not None,
+            resolve_project_relative(project, args.scene_outline)
+            if args.scene_outline
+            else default_scene_outline(project, args.branch, chapter),
+            6000,
+        ),
+    ]
+    for context_key, source_key, enabled, path, limit in items:
+        if not enabled:
+            continue
+        assert path is not None
+        try:
+            source = str(path.relative_to(project))
+        except ValueError:
+            source = str(path)
+        context[source_key] = source
+        if path.exists():
+            context[context_key] = read_head(path, limit)
+            retrieval_notes.append(f"{context_key}: loaded {source}")
+        else:
+            missing.append(source)
+            retrieval_notes.append(f"{context_key}: missing {source}")
 
 
 def collect_retrieval_trace(
@@ -760,6 +828,13 @@ def render_yaml(args: argparse.Namespace, context: dict[str, str | list[str]], m
         f"    current_chapter_goal: {yaml_quote(context.get('current_chapter_goal', ''))}",
         f"    chapter_function_card_source: {yaml_quote(context.get('chapter_function_card_source', ''))}",
         f"    chapter_function_card: {yaml_quote(context.get('chapter_function_card', ''))}",
+        "  writing_control_artifacts:",
+        f"    style_profile_source: {yaml_quote(context.get('style_profile_source', ''))}",
+        f"    style_profile: {yaml_quote(context.get('style_profile', ''))}",
+        f"    character_voice_sheet_source: {yaml_quote(context.get('character_voice_sheet_source', ''))}",
+        f"    character_voice_sheet: {yaml_quote(context.get('character_voice_sheet', ''))}",
+        f"    scene_outline_source: {yaml_quote(context.get('scene_outline_source', ''))}",
+        f"    scene_outline: {yaml_quote(context.get('scene_outline', ''))}",
         "  recent_context:",
         f"    previous_chapter_ending_source: {yaml_quote(context.get('previous_chapter_ending_source', ''))}",
         f"    previous_chapter_ending_excerpt: {yaml_quote(context.get('previous_chapter_ending_excerpt', ''))}",
@@ -899,6 +974,43 @@ def render_markdown(args: argparse.Namespace, context: dict[str, str | list[str]
         if isinstance(retrieval_warnings, list) and retrieval_warnings
         else "- None"
     )
+    writing_control_text = ""
+    if any(
+        context.get(key)
+        for key in (
+            "style_profile_source",
+            "style_profile",
+            "character_voice_sheet_source",
+            "character_voice_sheet",
+            "scene_outline_source",
+            "scene_outline",
+        )
+    ):
+        writing_control_text = f"""
+## Style Profile
+
+Source: `{context.get("style_profile_source", "")}`
+
+```yaml
+{context.get("style_profile", "")}
+```
+
+## Character Voice Sheet
+
+Source: `{context.get("character_voice_sheet_source", "")}`
+
+```yaml
+{context.get("character_voice_sheet", "")}
+```
+
+## Scene Outline
+
+Source: `{context.get("scene_outline_source", "")}`
+
+```yaml
+{context.get("scene_outline", "")}
+```
+"""
     return f"""# Context Pack
 
 Generated at: {datetime.now(timezone.utc).isoformat(timespec="seconds")}
@@ -950,6 +1062,8 @@ Source: `{context.get("chapter_function_card_source", "")}`
 ## Chapter Goal
 
 {context.get("chapter_goal", "")}
+
+{writing_control_text}
 
 ## Recent Context
 
@@ -1119,6 +1233,12 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--max-selectors", type=int, default=20, help="Maximum selectors per category after manual selectors.")
     parser.add_argument("--write-selector-report", action="store_true", help="Write a selector report next to context packs.")
     parser.add_argument("--selector-report-output", type=Path, help="Optional selector report output path.")
+    parser.add_argument("--include-style-profile", action="store_true", help="Include branch style profile in the context pack.")
+    parser.add_argument("--include-voice-sheet", action="store_true", help="Include branch character voice sheet in the context pack.")
+    parser.add_argument("--include-scene-outline", action="store_true", help="Include chapter scene outline in the context pack.")
+    parser.add_argument("--style-profile", type=Path, help="Explicit style profile path.")
+    parser.add_argument("--voice-sheet", type=Path, help="Explicit character voice sheet path.")
+    parser.add_argument("--scene-outline", type=Path, help="Explicit scene outline path.")
     parser.add_argument("--use-retrieval-index", action="store_true", help="Use v0.7 retrieval index for candidate trace.")
     parser.add_argument("--retrieval-index", type=Path, help="Retrieval index path. Defaults to indexes/retrieval_index.jsonl.")
     parser.add_argument("--retrieval-query", default="", help="Query for deterministic retrieval trace.")
