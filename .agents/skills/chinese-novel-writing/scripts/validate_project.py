@@ -12,7 +12,7 @@ from pathlib import Path
 from _novel_utils import parse_mapping_list, parse_progress
 
 
-CURRENT_SCHEMA_VERSION = "0.6"
+CURRENT_SCHEMA_VERSION = "0.7"
 
 REQUIRED_DIRS = [
     "raw_text",
@@ -287,13 +287,20 @@ def check_current_branch(project: Path, errors: list[str]) -> None:
 
 def check_context_pack_size(project: Path, warnings: list[str]) -> None:
     full_text = project / "raw_text" / "full_text.txt"
-    if not full_text.exists():
-        return
-    full_size = full_text.stat().st_size
-    if full_size == 0 or full_size < 10_000:
-        return
     for context_pack in (project / "context_packs").glob("*.*"):
         if not context_pack.is_file():
+            continue
+        if context_pack.name.endswith("_audit.md"):
+            continue
+        if context_pack.stat().st_size > 60_000:
+            warnings.append(f"context pack may exceed budget: {context_pack.relative_to(project)}")
+        text = read_text(context_pack)
+        if "raw_text/full_text.txt" in text or "raw_text\\full_text.txt" in text:
+            warnings.append(f"context pack references raw_text/full_text.txt: {context_pack.relative_to(project)}")
+        if not full_text.exists():
+            continue
+        full_size = full_text.stat().st_size
+        if full_size == 0 or full_size < 10_000:
             continue
         if context_pack.stat().st_size >= full_size * 0.9:
             warnings.append(f"context pack may contain too much raw text: {context_pack.relative_to(project)}")
@@ -493,6 +500,42 @@ def check_rewrite_workflow_suggestions(project: Path, suggestions: list[str]) ->
             )
 
 
+def has_project_material_for_retrieval(project: Path) -> bool:
+    checks = [
+        project / "extracted" / "chunk_cards",
+        project / "extracted" / "chapter_cards",
+        project / "extracted" / "volume_summaries",
+        project / "canon",
+        project / "branches",
+        project / "pending_updates",
+    ]
+    for path in checks:
+        if path.exists() and any(item for item in path.rglob("*") if item.is_file() and not item.name.startswith(".")):
+            return True
+    return False
+
+
+def check_retrieval_and_audit_suggestions(project: Path, warnings: list[str], suggestions: list[str]) -> None:
+    retrieval_index = project / "indexes" / "retrieval_index.jsonl"
+    if has_project_material_for_retrieval(project) and not retrieval_index.exists():
+        suggestions.append("retrieval index is missing; run build-retrieval-index --project-root <project>")
+    for context_pack in sorted((project / "context_packs").glob("*.md")):
+        if context_pack.name.endswith("_audit.md"):
+            continue
+        audit_report = context_pack.with_name(f"{context_pack.stem}_audit.md")
+        if not audit_report.exists():
+            suggestions.append(
+                f"context pack {context_pack.relative_to(project)} has no audit report; run audit-context-pack --context-pack {context_pack.relative_to(project)}"
+            )
+        text = read_text(context_pack)
+        if retrieval_index.exists() and "## Retrieval Trace" not in text:
+            suggestions.append(
+                f"context pack {context_pack.relative_to(project)} has no Retrieval Trace; rerun build-context-pack --use-retrieval-index"
+            )
+        if "retrieval index is source of truth" in text.lower():
+            warnings.append(f"context pack may treat retrieval index as source of truth: {context_pack.relative_to(project)}")
+
+
 def check_skill_frontmatter(warnings: list[str], suggestions: list[str]) -> None:
     skill_path = Path(__file__).resolve().parents[1] / "SKILL.md"
     if not skill_path.exists():
@@ -558,6 +601,7 @@ def validate_project(project: Path) -> tuple[list[str], list[str], list[str]]:
     check_extraction_progress(project, errors, warnings, suggestions)
     check_quality_workflow_suggestions(project, suggestions)
     check_rewrite_workflow_suggestions(project, suggestions)
+    check_retrieval_and_audit_suggestions(project, warnings, suggestions)
     check_skill_frontmatter(warnings, suggestions)
 
     if not (project / "context_packs" / "latest_context_pack.md").exists():

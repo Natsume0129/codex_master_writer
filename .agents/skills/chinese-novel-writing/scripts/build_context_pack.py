@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from _novel_utils import chapter_label_candidates
+from _retrieval_utils import load_index, query_entries, resolve_project_relative, selector_lines
 
 
 HEAD_LIMIT = 3000
@@ -620,7 +621,103 @@ def collect_context(args: argparse.Namespace) -> tuple[dict[str, str | list[str]
         branch_dir / "timeline.yaml", args.event_ids or [], "timeline events", missing
     )
     context["retrieval_notes"] = retrieval_notes
+    collect_retrieval_trace(project, args, context, missing, retrieval_notes)
     return context, sorted(set(missing))
+
+
+def collect_retrieval_trace(
+    project: Path,
+    args: argparse.Namespace,
+    context: dict[str, str | list[str]],
+    missing: list[str],
+    retrieval_notes: list[str],
+) -> None:
+    context["retrieval_trace_candidates"] = []
+    context["retrieval_trace_sources"] = []
+    context["retrieval_trace_warnings"] = []
+    context["retrieval_trace_omitted_count"] = "0"
+    context["retrieval_trace_index"] = ""
+    context["retrieval_trace_query"] = ""
+    if not args.use_retrieval_index:
+        return
+
+    index_path = (
+        resolve_project_relative(project, args.retrieval_index)
+        if args.retrieval_index
+        else project / "indexes" / "retrieval_index.jsonl"
+    )
+    assert index_path is not None
+    query = args.retrieval_query or args.user_request or " ".join(
+        value
+        for value in [
+            args.task,
+            args.chapter,
+            *args.characters,
+            *args.locations,
+            *args.items,
+            *args.organizations,
+            *args.terms,
+        ]
+        if value
+    )
+    context["retrieval_trace_index"] = str(index_path.relative_to(project)) if index_path.is_relative_to(project) else str(index_path)
+    context["retrieval_trace_query"] = query
+    if not index_path.exists():
+        warning = f"retrieval index missing: {context['retrieval_trace_index']}; run build-retrieval-index"
+        retrieval_notes.append(warning)
+        context["retrieval_trace_warnings"] = [warning]
+        missing.append("indexes/retrieval_index.jsonl")
+        return
+    filters = {
+        "characters": args.characters,
+        "locations": args.locations,
+        "items": args.items,
+        "organizations": args.organizations,
+        "terms": args.terms,
+    }
+    try:
+        entries = load_index(index_path)
+        results, omitted = query_entries(
+            entries,
+            query=query,
+            branch=args.branch,
+            chapter=args.chapter,
+            filters=filters,
+            top_k=args.retrieval_top_k,
+        )
+    except Exception as exc:  # noqa: BLE001
+        warning = f"retrieval index query failed: {exc}"
+        retrieval_notes.append(warning)
+        context["retrieval_trace_warnings"] = [warning]
+        return
+
+    candidates: list[str] = []
+    for result in results:
+        entry = result["entry"]
+        candidates.append(
+            " | ".join(
+                [
+                    f"entry_id={entry.get('entry_id', '')}",
+                    f"score={result.get('score', 0)}",
+                    f"source_file={entry.get('source_file', '')}",
+                    f"source_type={entry.get('source_type', '')}",
+                    f"branch={entry.get('branch', '')}",
+                    f"chapter={entry.get('chapter', '')}",
+                    f"matched_terms={', '.join(str(item) for item in result.get('matched_terms', []))}",
+                    f"status={entry.get('status', '')}",
+                    f"confidence={entry.get('confidence', '')}",
+                    f"summary={entry.get('summary', '')}",
+                ]
+            )
+        )
+    sources = [line.removeprefix("- source_file: ") for line in selector_lines(results)]
+    context["retrieval_trace_candidates"] = candidates
+    context["retrieval_trace_sources"] = sources
+    context["retrieval_trace_warnings"] = [] if results else ["retrieval query returned no candidates"]
+    context["retrieval_trace_omitted_count"] = str(len(omitted))
+    retrieval_notes.append(
+        f"retrieval_index: selected {len(results)} candidates from {context['retrieval_trace_index']}"
+    )
 
 
 def render_list_yaml(lines: list[str], values: list[str], indent: str) -> None:
@@ -634,6 +731,9 @@ def render_list_yaml(lines: list[str], values: list[str], indent: str) -> None:
 def render_yaml(args: argparse.Namespace, context: dict[str, str | list[str]], missing: list[str]) -> str:
     summaries = context.get("recent_chapter_summaries", [])
     retrieval_notes = context.get("retrieval_notes", [])
+    retrieval_candidates = context.get("retrieval_trace_candidates", [])
+    retrieval_sources = context.get("retrieval_trace_sources", [])
+    retrieval_warnings = context.get("retrieval_trace_warnings", [])
     auto_selector_sources = context.get("auto_selector_sources", [])
     auto_selector_notes = context.get("auto_selector_notes", [])
     lines = [
@@ -689,6 +789,38 @@ def render_yaml(args: argparse.Namespace, context: dict[str, str | list[str]], m
             f"    plot_node_map: {yaml_quote(context.get('rewrite_plot_node_map', ''))}",
             f"    divergence_analysis: {yaml_quote(context.get('rewrite_divergence_analysis', ''))}",
             f"    replacement_routes: {yaml_quote(context.get('rewrite_replacement_routes', ''))}",
+            "  retrieval_trace:",
+            f"    enabled: {'true' if args.use_retrieval_index else 'false'}",
+            f"    index_file: {yaml_quote(context.get('retrieval_trace_index', ''))}",
+            f"    query: {yaml_quote(context.get('retrieval_trace_query', ''))}",
+            f"    omitted_count: {yaml_quote(context.get('retrieval_trace_omitted_count', '0'))}",
+            "    selected_candidates:",
+        ]
+    )
+    if isinstance(retrieval_candidates, list):
+        render_list_yaml(lines, retrieval_candidates, "      ")
+    else:
+        lines.append("      []")
+    lines.extend(
+        [
+            "    source_files:",
+        ]
+    )
+    if isinstance(retrieval_sources, list):
+        render_list_yaml(lines, retrieval_sources, "      ")
+    else:
+        lines.append("      []")
+    lines.extend(
+        [
+            "    warnings:",
+        ]
+    )
+    if isinstance(retrieval_warnings, list):
+        render_list_yaml(lines, retrieval_warnings, "      ")
+    else:
+        lines.append("      []")
+    lines.extend(
+        [
             "  auto_selection:",
             f"    enabled: {'true' if args.auto_select else 'false'}",
             f"    selector_source: {yaml_quote(args.selector_source)}",
@@ -726,6 +858,9 @@ def render_yaml(args: argparse.Namespace, context: dict[str, str | list[str]], m
 def render_markdown(args: argparse.Namespace, context: dict[str, str | list[str]], missing: list[str]) -> str:
     summaries = context.get("recent_chapter_summaries", [])
     retrieval_notes = context.get("retrieval_notes", [])
+    retrieval_candidates = context.get("retrieval_trace_candidates", [])
+    retrieval_sources = context.get("retrieval_trace_sources", [])
+    retrieval_warnings = context.get("retrieval_trace_warnings", [])
     auto_selector_sources = context.get("auto_selector_sources", [])
     auto_selector_notes = context.get("auto_selector_notes", [])
     summary_text = (
@@ -749,6 +884,21 @@ def render_markdown(args: argparse.Namespace, context: dict[str, str | list[str]
         else "- None"
     )
     missing_text = "\n".join(f"- {item}" for item in missing) if missing else "- None"
+    retrieval_candidate_text = (
+        "\n".join(f"- {item}" for item in retrieval_candidates)
+        if isinstance(retrieval_candidates, list) and retrieval_candidates
+        else "- None"
+    )
+    retrieval_source_text = (
+        "\n".join(f"- `{item}`" for item in retrieval_sources)
+        if isinstance(retrieval_sources, list) and retrieval_sources
+        else "- None"
+    )
+    retrieval_warning_text = (
+        "\n".join(f"- {item}" for item in retrieval_warnings)
+        if isinstance(retrieval_warnings, list) and retrieval_warnings
+        else "- None"
+    )
     return f"""# Context Pack
 
 Generated at: {datetime.now(timezone.utc).isoformat(timespec="seconds")}
@@ -899,6 +1049,25 @@ Source: `{context.get("previous_chapter_ending_source", "")}`
 {context.get("rewrite_replacement_routes", "")}
 ```
 
+## Retrieval Trace
+
+- enabled: {str(args.use_retrieval_index).lower()}
+- index_file: `{context.get("retrieval_trace_index", "")}`
+- query: `{context.get("retrieval_trace_query", "")}`
+- omitted_count: `{context.get("retrieval_trace_omitted_count", "0")}`
+
+### Selected Candidates
+
+{retrieval_candidate_text}
+
+### Source Files
+
+{retrieval_source_text}
+
+### Warnings
+
+{retrieval_warning_text}
+
 ## Auto Selection
 
 - enabled: {str(args.auto_select).lower()}
@@ -950,6 +1119,13 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--max-selectors", type=int, default=20, help="Maximum selectors per category after manual selectors.")
     parser.add_argument("--write-selector-report", action="store_true", help="Write a selector report next to context packs.")
     parser.add_argument("--selector-report-output", type=Path, help="Optional selector report output path.")
+    parser.add_argument("--use-retrieval-index", action="store_true", help="Use v0.7 retrieval index for candidate trace.")
+    parser.add_argument("--retrieval-index", type=Path, help="Retrieval index path. Defaults to indexes/retrieval_index.jsonl.")
+    parser.add_argument("--retrieval-query", default="", help="Query for deterministic retrieval trace.")
+    parser.add_argument("--retrieval-top-k", type=int, default=20, help="Retrieval candidates to show in trace.")
+    parser.add_argument("--context-budget-chars", type=int, default=60000, help="Budget used by optional audit.")
+    parser.add_argument("--write-audit", action="store_true", help="Write a context audit report after building the pack.")
+    parser.add_argument("--audit-output", type=Path, help="Optional context audit report path.")
     parser.add_argument("--format", choices=("markdown", "yaml"), default=None, help="Output format.")
     parser.add_argument("--output", type=Path, help="Output file. Defaults to context_packs/latest_context_pack.md.")
     parser.add_argument("--force", action="store_true", help="Overwrite existing output.")
@@ -978,6 +1154,39 @@ def main(argv: list[str] | None = None) -> int:
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(content, encoding="utf-8")
     print(f"Wrote context pack: {output}")
+    if args.write_audit:
+        from audit_context_pack import audit_context, render_report
+
+        audit_index = (
+            resolve_project_relative(project, args.retrieval_index)
+            if args.retrieval_index
+            else project / "indexes" / "retrieval_index.jsonl"
+        )
+        audit_output = (
+            resolve_project_relative(project, args.audit_output)
+            if args.audit_output
+            else output.parent / f"{output.stem}_audit.md"
+        )
+        assert audit_index is not None
+        assert audit_output is not None
+        audit_result = audit_context(
+            project,
+            output,
+            args.branch,
+            args.task,
+            args.chapter,
+            args.context_budget_chars,
+            audit_index,
+        )
+        if audit_output.exists() and not args.force:
+            print(f"error: audit output exists: {audit_output}. Use --force to overwrite.", file=sys.stderr)
+            return 1
+        audit_output.parent.mkdir(parents=True, exist_ok=True)
+        audit_output.write_text(
+            render_report(project, output, args.branch, args.task, args.chapter, audit_result),
+            encoding="utf-8",
+        )
+        print(f"Wrote context audit report: {audit_output}")
     if missing:
         print(f"Missing sections: {len(missing)}")
     return 0

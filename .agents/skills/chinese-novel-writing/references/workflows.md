@@ -47,13 +47,16 @@ Steps:
 
 1. Confirm active branch from `project_config.yaml` or user request.
 2. If chapter goal is missing, create a chapter function card before writing with `scripts/novel_project.py create-function-card`.
-3. Build context pack with `scripts/novel_project.py build-context-pack`; use `--auto-select` when selectors are missing or stale.
-4. Generate a deterministic writing prompt with `scripts/novel_project.py create-draft-prompt`; pass `--target-length` or `--style-strictness` when the user gives writing-control preferences.
-5. Draft according to the generated prompt, style guide, current outline, recent summaries, and constraints.
-6. Run quality gate and create a durable report plus review prompt with `scripts/novel_project.py create-quality-report --with-prompt` when a review file is needed.
-7. Generate post-write patch with `scripts/novel_project.py create-patch` and fill candidate updates.
-8. Create a patch review report with `scripts/novel_project.py review-patch`.
-9. Dry-run `scripts/novel_project.py apply-patch` if the user wants to apply safe post-write updates.
+3. If retrieval index is missing or stale, run `scripts/novel_project.py build-retrieval-index`.
+4. Optionally run `scripts/novel_project.py query-retrieval-index` to create candidate selectors.
+5. Build context pack with `scripts/novel_project.py build-context-pack`; use `--auto-select` when selectors are missing or stale, or `--use-retrieval-index` when the v0.7 retrieval trace should be included.
+6. Audit the pack with `scripts/novel_project.py audit-context-pack` or use `build-context-pack --write-audit`.
+7. Generate a deterministic writing prompt with `scripts/novel_project.py create-draft-prompt`; pass `--target-length` or `--style-strictness` when the user gives writing-control preferences.
+8. Draft according to the generated prompt, style guide, current outline, recent summaries, and constraints.
+9. Run quality gate and create a durable report plus review prompt with `scripts/novel_project.py create-quality-report --with-prompt` when a review file is needed.
+10. Generate post-write patch with `scripts/novel_project.py create-patch` and fill candidate updates.
+11. Create a patch review report with `scripts/novel_project.py review-patch`.
+12. Dry-run `scripts/novel_project.py apply-patch` if the user wants to apply safe post-write updates.
 
 Output: draft according to output mode, short quality summary, and patch summary.
 
@@ -64,14 +67,17 @@ Input: a "what if", divergence, or request to change original development while 
 Steps:
 
 1. Create or select an isolated branch with `scripts/novel_project.py new-branch`, defaulting to `--inherit skeleton`.
-2. Build a rewrite context pack with `scripts/novel_project.py build-context-pack --task rewrite_plot`.
-3. Create a branch-local plot node map with `scripts/novel_project.py create-plot-node-map`.
-4. Create divergence analysis with `scripts/novel_project.py create-divergence-analysis`.
-5. Create a rewrite plan prompt and replacement-route skeleton with `scripts/novel_project.py create-rewrite-plan`.
-6. Let Codex/model fill or revise rewrite artifacts from the generated prompt. The prompt does not generate prose.
-7. Create a branch diff report with `scripts/novel_project.py create-branch-diff-report` for user review.
-8. Run `scripts/novel_project.py validate` and resolve missing artifact suggestions.
-9. Ask the user to confirm required decisions or choose a replacement route before outline or draft work.
+2. If retrieval index is missing or stale, run `scripts/novel_project.py build-retrieval-index --include-branches`.
+3. Optionally run `scripts/novel_project.py query-retrieval-index` for the divergence terms.
+4. Build a rewrite context pack with `scripts/novel_project.py build-context-pack --task rewrite_plot --use-retrieval-index`.
+5. Audit the pack with `scripts/novel_project.py audit-context-pack` or `--write-audit`.
+6. Create a branch-local plot node map with `scripts/novel_project.py create-plot-node-map`.
+7. Create divergence analysis with `scripts/novel_project.py create-divergence-analysis`.
+8. Create a rewrite plan prompt and replacement-route skeleton with `scripts/novel_project.py create-rewrite-plan`.
+9. Let Codex/model fill or revise rewrite artifacts from the generated prompt. The prompt does not generate prose.
+10. Create a branch diff report with `scripts/novel_project.py create-branch-diff-report` for user review.
+11. Run `scripts/novel_project.py validate` and resolve missing artifact suggestions.
+12. Ask the user to confirm required decisions or choose a replacement route before outline or draft work.
 
 Rules:
 
@@ -131,11 +137,13 @@ Input: request to审稿, check consistency, or inspect a draft/outline.
 
 Steps:
 
-1. Build context pack with the relevant branch; use `--auto-select` if the user did not provide selectors.
-2. Check character consistency, world rules, timeline, item state, information asymmetry, foreshadowing, style drift, pacing, and branch pollution.
-3. Classify findings by severity.
-4. Write `branches/<branch>/reviews/chapter_XXX_quality_report.md` and a review prompt with `create-quality-report --with-prompt` when the review should persist.
-5. Suggest fixes without silently rewriting major plot.
+1. Query retrieval index when candidate context is unclear.
+2. Build context pack with the relevant branch; use `--auto-select` if the user did not provide selectors, or `--use-retrieval-index` for a v0.7 candidate trace.
+3. Audit the pack before review when traceability or budget matters.
+4. Check character consistency, world rules, timeline, item state, information asymmetry, foreshadowing, style drift, pacing, and branch pollution.
+5. Classify findings by severity.
+6. Write `branches/<branch>/reviews/chapter_XXX_quality_report.md` and a review prompt with `create-quality-report --with-prompt` when the review should persist.
+7. Suggest fixes without silently rewriting major plot.
 
 Output: severe, medium, light issues, and suggested fixes.
 

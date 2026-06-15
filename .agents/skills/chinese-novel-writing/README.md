@@ -83,6 +83,36 @@ python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-bran
 python .agents/skills/chinese-novel-writing/scripts/novel_project.py validate --project-root ./tmp/demo_novel
 ```
 
+## v0.7 Additions
+
+v0.7 adds deterministic retrieval index, context audit, and acceptance harness support. It does not add databases, vector stores, embeddings, external APIs, Web UI, third-party dependencies, AI summarization, or prose generation.
+
+New commands:
+
+- `build-retrieval-index`
+- `query-retrieval-index`
+- `audit-context-pack`
+- `acceptance-check`
+
+v0.7 preflight keeps the v0.6 `SKILL.md` frontmatter quoted and valid; no separate v0.6.1 changelog is used.
+
+Minimal v0.7 retrieval and audit flow:
+
+```bash
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py build-retrieval-index --project-root ./tmp/demo_novel --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py query-retrieval-index --project-root ./tmp/demo_novel --query "protagonist antagonist ally" --branch what_if_villain_ally --top-k 10 --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py build-context-pack --project-root ./tmp/demo_novel --branch what_if_villain_ally --task rewrite_plot --chapter 1 --user-request "what if protagonist allies with antagonist early" --use-retrieval-index --retrieval-query "protagonist antagonist ally relationship change" --retrieval-top-k 10 --write-audit --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py audit-context-pack --project-root ./tmp/demo_novel --context-pack context_packs/latest_context_pack.md --branch what_if_villain_ally --task rewrite_plot --chapter 1 --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py acceptance-check --repo-root . --force
+```
+
+Retrieval index behavior:
+
+- Reads only structured artifacts such as extracted cards, canon/bible files, branch artifacts, reviews, summaries, and pending patches.
+- Does not read `raw_text/full_text.txt`, `raw_text/*.txt`, or `imports/source_texts/*.txt` content.
+- Uses exact/normalized substring, entity, chapter, branch, source-type, status, and confidence weighting.
+- Produces candidate source references; it is not source of truth.
+
 Minimal v0.5 writing-quality flow:
 
 ```bash
@@ -242,6 +272,10 @@ python .agents/skills/chinese-novel-writing/scripts/novel_project.py validate --
 - `create_branch.py`
 - `create_chapter_function_card.py`
 - `build_context_pack.py`
+- `build_retrieval_index.py`
+- `query_retrieval_index.py`
+- `audit_context_pack.py`
+- `run_acceptance_checks.py`
 - `create_draft_prompt.py`
 - `create_plot_node_map.py`
 - `create_divergence_analysis.py`
@@ -258,6 +292,7 @@ python .agents/skills/chinese-novel-writing/scripts/novel_project.py validate --
 - v0.5.1 does not add a new schema version.
 - v0.5 uses `schema_version: "0.5"` for chapter function cards, draft prompts, quality review prompts, and patch review reports.
 - v0.6 uses `schema_version: "0.6"` for plot rewrite artifacts under `branches/<branch>/rewrite/`.
+- v0.7 uses `schema_version: "0.7"` for retrieval query reports, context audit reports, and acceptance reports; `retrieval_index.jsonl` uses one JSON object per line.
 - The project skeleton remains `schema_version: "0.4"` and is still valid.
 - `output_mode` 是 canonical 字段；旧需求里的 `preferred_output_mode` 不是当前实现主字段。
 - 重要事实继续使用 `source` / `status` / `confidence`。

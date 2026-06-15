@@ -328,10 +328,76 @@ def command_build_context_pack(args: argparse.Namespace) -> int:
     add_value(script_args, "--max-selectors", args.max_selectors)
     add_flag(script_args, args.write_selector_report, "--write-selector-report")
     add_value(script_args, "--selector-report-output", args.selector_report_output)
+    add_flag(script_args, args.use_retrieval_index, "--use-retrieval-index")
+    add_value(script_args, "--retrieval-index", args.retrieval_index)
+    add_value(script_args, "--retrieval-query", args.retrieval_query)
+    add_value(script_args, "--retrieval-top-k", args.retrieval_top_k)
+    add_value(script_args, "--context-budget-chars", args.context_budget_chars)
+    add_flag(script_args, args.write_audit, "--write-audit")
+    add_value(script_args, "--audit-output", args.audit_output)
     add_value(script_args, "--format", args.format)
     add_value(script_args, "--output", args.output)
     add_flag(script_args, args.force, "--force")
     run_step("Build context pack", "build_context_pack.py", script_args)
+    return 0
+
+
+def command_build_retrieval_index(args: argparse.Namespace) -> int:
+    script_args = ["--project", path_text(args.project_root), "--branch", args.branch]
+    add_flag(script_args, args.include_branches, "--include-branches")
+    add_values(script_args, "--source-types", args.source_types)
+    add_value(script_args, "--output", args.output)
+    add_value(script_args, "--report-output", args.report_output)
+    add_flag(script_args, args.force, "--force")
+    run_step("Build retrieval index", "build_retrieval_index.py", script_args)
+    return 0
+
+
+def command_query_retrieval_index(args: argparse.Namespace) -> int:
+    script_args = ["--project", path_text(args.project_root)]
+    add_value(script_args, "--index", args.index)
+    add_value(script_args, "--query", args.query)
+    add_value(script_args, "--branch", args.branch)
+    add_value(script_args, "--chapter", args.chapter)
+    add_values(script_args, "--characters", args.characters)
+    add_values(script_args, "--locations", args.locations)
+    add_values(script_args, "--items", args.items)
+    add_values(script_args, "--organizations", args.organizations)
+    add_values(script_args, "--terms", args.terms)
+    add_values(script_args, "--source-types", args.source_types)
+    add_value(script_args, "--top-k", args.top_k)
+    add_value(script_args, "--output", args.output)
+    add_value(script_args, "--format", args.format)
+    add_flag(script_args, args.force, "--force")
+    run_step("Query retrieval index", "query_retrieval_index.py", script_args)
+    return 0
+
+
+def command_audit_context_pack(args: argparse.Namespace) -> int:
+    script_args = ["--project", path_text(args.project_root)]
+    add_value(script_args, "--context-pack", args.context_pack)
+    add_value(script_args, "--branch", args.branch)
+    add_value(script_args, "--task", args.task)
+    add_value(script_args, "--chapter", args.chapter)
+    add_value(script_args, "--budget-chars", args.budget_chars)
+    add_value(script_args, "--index", args.index)
+    add_value(script_args, "--output", args.output)
+    add_flag(script_args, args.force, "--force")
+    run_step("Audit context pack", "audit_context_pack.py", script_args)
+    return 0
+
+
+def command_acceptance_check(args: argparse.Namespace) -> int:
+    script_args = ["--repo-root", path_text(args.repo_root)]
+    add_value(script_args, "--project-root", args.project_root)
+    add_flag(script_args, args.keep, "--keep")
+    add_flag(script_args, args.fast, "--fast")
+    add_flag(script_args, args.skip_v05, "--skip-v05")
+    add_flag(script_args, args.skip_v06, "--skip-v06")
+    add_flag(script_args, args.skip_v07, "--skip-v07")
+    add_value(script_args, "--output", args.output)
+    add_flag(script_args, args.force, "--force")
+    run_step("Run acceptance checks", "run_acceptance_checks.py", script_args)
     return 0
 
 
@@ -661,10 +727,81 @@ def build_parser() -> argparse.ArgumentParser:
     context_pack.add_argument("--max-selectors", type=int, default=20)
     context_pack.add_argument("--write-selector-report", action="store_true")
     context_pack.add_argument("--selector-report-output", type=Path)
+    context_pack.add_argument("--use-retrieval-index", action="store_true")
+    context_pack.add_argument("--retrieval-index", type=Path)
+    context_pack.add_argument("--retrieval-query", default="")
+    context_pack.add_argument("--retrieval-top-k", type=int, default=20)
+    context_pack.add_argument("--context-budget-chars", type=int, default=60000)
+    context_pack.add_argument("--write-audit", action="store_true")
+    context_pack.add_argument("--audit-output", type=Path)
     context_pack.add_argument("--format", choices=("markdown", "yaml"), default=None)
     context_pack.add_argument("--output", type=Path)
     context_pack.add_argument("--force", action="store_true")
     context_pack.set_defaults(func=command_build_context_pack)
+
+    retrieval_index = subparsers.add_parser(
+        "build-retrieval-index",
+        help="Build a v0.7 deterministic retrieval index from structured artifacts.",
+    )
+    project_arg(retrieval_index)
+    retrieval_index.add_argument("--branch", default="main")
+    retrieval_index.add_argument("--include-branches", action="store_true")
+    retrieval_index.add_argument("--source-types", nargs="*", default=[])
+    retrieval_index.add_argument("--output", type=Path)
+    retrieval_index.add_argument("--report-output", type=Path)
+    retrieval_index.add_argument("--force", action="store_true")
+    retrieval_index.set_defaults(func=command_build_retrieval_index)
+
+    retrieval_query = subparsers.add_parser(
+        "query-retrieval-index",
+        help="Create a deterministic v0.7 retrieval candidate report.",
+    )
+    project_arg(retrieval_query)
+    retrieval_query.add_argument("--index", type=Path)
+    retrieval_query.add_argument("--query", default="")
+    retrieval_query.add_argument("--branch", default="")
+    retrieval_query.add_argument("--chapter", default="")
+    retrieval_query.add_argument("--characters", nargs="*", default=[])
+    retrieval_query.add_argument("--locations", nargs="*", default=[])
+    retrieval_query.add_argument("--items", nargs="*", default=[])
+    retrieval_query.add_argument("--organizations", nargs="*", default=[])
+    retrieval_query.add_argument("--terms", nargs="*", default=[])
+    retrieval_query.add_argument("--source-types", nargs="*", default=[])
+    retrieval_query.add_argument("--top-k", type=int, default=20)
+    retrieval_query.add_argument("--output", type=Path)
+    retrieval_query.add_argument("--format", choices=("markdown", "yaml"), default="markdown")
+    retrieval_query.add_argument("--force", action="store_true")
+    retrieval_query.set_defaults(func=command_query_retrieval_index)
+
+    audit_context = subparsers.add_parser(
+        "audit-context-pack",
+        help="Audit a context pack for v0.7 budget and traceability rules.",
+    )
+    project_arg(audit_context)
+    audit_context.add_argument("--context-pack", type=Path)
+    audit_context.add_argument("--branch", default="main")
+    audit_context.add_argument("--task", default="")
+    audit_context.add_argument("--chapter", default="")
+    audit_context.add_argument("--budget-chars", type=int, default=60000)
+    audit_context.add_argument("--index", type=Path)
+    audit_context.add_argument("--output", type=Path)
+    audit_context.add_argument("--force", action="store_true")
+    audit_context.set_defaults(func=command_audit_context_pack)
+
+    acceptance = subparsers.add_parser(
+        "acceptance-check",
+        help="Run deterministic v0.7 acceptance checks without pytest.",
+    )
+    acceptance.add_argument("--repo-root", type=Path, default=Path("."))
+    acceptance.add_argument("--project-root", type=Path)
+    acceptance.add_argument("--keep", action="store_true")
+    acceptance.add_argument("--fast", action="store_true")
+    acceptance.add_argument("--skip-v05", action="store_true")
+    acceptance.add_argument("--skip-v06", action="store_true")
+    acceptance.add_argument("--skip-v07", action="store_true")
+    acceptance.add_argument("--output", type=Path)
+    acceptance.add_argument("--force", action="store_true")
+    acceptance.set_defaults(func=command_acceptance_check)
 
     draft_prompt = subparsers.add_parser(
         "create-draft-prompt",

@@ -1,6 +1,6 @@
 ---
 name: chinese-novel-writing
-description: "Use this skill for Chinese novel writing projects and long-form fiction workflows, including project creation, story import, continuation, outline building, style profiling, story bible maintenance, context pack generation, branch-isolated plot rewriting, alternate plot planning, divergence analysis, and quality review."
+description: "Use this skill for Chinese novel writing projects and long-form fiction workflows, including project creation, story import, continuation, outline building, style profiling, story bible maintenance, retrieval index generation, context pack audit, branch-isolated plot rewriting, alternate plot planning, divergence analysis, and quality review."
 ---
 
 # Chinese Novel Writing
@@ -26,6 +26,7 @@ Map each request to the nearest workflow in `references/workflows.md`. If the re
 - `import_pipeline`: save raw text, split chapters/chunks, create source-tracked cards, then build bible/index placeholders.
 - `extraction_progress_manager`: track chunk/chapter/batch extraction state in `imports/extraction_progress.yaml`.
 - `index_builder`: rebuild lightweight navigation indexes from extracted cards and canon files; indexes are not source of truth.
+- `retrieval_index_pipeline`: build/query v0.7 retrieval candidates from structured artifacts only, then audit context packs for traceability and budget.
 - `context_pack_builder`: assemble only task-relevant facts, summaries, and constraints.
 - `drafting_pipeline`: generate a draft prompt from the chapter function card and context pack, write only after model review, then run quality checks.
 - `continuation_pipeline`: continue only after branch and recent context are known.
@@ -44,6 +45,7 @@ Map each request to the nearest workflow in `references/workflows.md`. If the re
 6. Do not create or rely on a built-in adult content safety checker. This skill focuses on project workflow, continuity, writing support, and branch isolation.
 7. Do not automatically decide major plot changes: core character death, betrayal, confirmed romance, early secret reveals, final antagonist identity, world-rule reversal, main-goal changes, original-mainline rewrites, or branch merges.
 8. Do not overwrite user source text. Preserve raw imports and keep generated changes separate unless the user explicitly approves a write target.
+9. Retrieval indexes are candidate navigation aids only. They must not replace canon, extracted cards, branch artifacts, or pending patches.
 
 ## Reference Loading
 
@@ -54,6 +56,7 @@ Load only the reference needed for the current task:
 - Long text import: `references/import_pipeline.md`.
 - Batch extraction prompts and card schemas: `references/extraction_prompts.md`.
 - Drafting, continuation, review, or rewrite context: `references/context_pack.md`.
+- Retrieval index, query reports, context audits, or acceptance checks: `references/retrieval_index.md`.
 - Chapter goal planning before drafting: `references/chapter_function_card.md`.
 - Alternate plot or branch work: `references/branch_system.md`.
 - Plot rewrite divergence analysis: `references/plot_rewrite_intelligence.md`.
@@ -65,9 +68,9 @@ Load only the reference needed for the current task:
 
 ## Script Usage
 
-Use `scripts/novel_project.py` as the preferred v0.6 unified CLI for deterministic file work. Use lower-level scripts only when fine-grained control is needed.
+Use `scripts/novel_project.py` as the preferred v0.7 unified CLI for deterministic file work. Use lower-level scripts only when fine-grained control is needed.
 
-- `scripts/novel_project.py` exposes `init`, `split-import`, `init-progress`, `create-batch`, `import-status`, `create-chapter-card-batch`, `create-volume-summary-batch`, `create-bible-patch-batch`, `mark-done`, `build-indexes`, `new-branch`, `create-function-card`, `build-context-pack`, `create-draft-prompt`, `create-plot-node-map`, `create-divergence-analysis`, `create-rewrite-plan`, `create-branch-diff-report`, `create-quality-report`, `create-patch`, `review-patch`, `create-patch-review`, `apply-patch`, and `validate`.
+- `scripts/novel_project.py` exposes `init`, `split-import`, `init-progress`, `create-batch`, `import-status`, `create-chapter-card-batch`, `create-volume-summary-batch`, `create-bible-patch-batch`, `mark-done`, `build-indexes`, `build-retrieval-index`, `query-retrieval-index`, `new-branch`, `create-function-card`, `build-context-pack`, `audit-context-pack`, `acceptance-check`, `create-draft-prompt`, `create-plot-node-map`, `create-divergence-analysis`, `create-rewrite-plan`, `create-branch-diff-report`, `create-quality-report`, `create-patch`, `review-patch`, `create-patch-review`, `apply-patch`, and `validate`.
 - `scripts/init_project.py` creates a project from templates.
 - `scripts/split_chapters.py` splits imported text and writes an import manifest.
 - `scripts/split_chunks.py` splits chapter files into overlapping chunks and writes a chunk manifest.
@@ -79,13 +82,17 @@ Use `scripts/novel_project.py` as the preferred v0.6 unified CLI for determinist
 - `scripts/create_bible_patch_batch.py` creates story-bible patch prompt batches and pending patch skeletons without editing canon.
 - `scripts/mark_extraction_done.py` marks chunks or batches as queued, processing, done, failed, or skipped.
 - `scripts/build_indexes.py` rebuilds lightweight navigation indexes without external services.
+- `scripts/build_retrieval_index.py` builds `indexes/retrieval_index.jsonl` and a summary report from structured artifacts only.
+- `scripts/query_retrieval_index.py` creates deterministic retrieval candidate reports without embeddings or semantic search.
+- `scripts/audit_context_pack.py` audits context packs for budget, traceability, raw-text risk, branch boundaries, and Retrieval Trace.
+- `scripts/run_acceptance_checks.py` runs local deterministic compatibility checks and writes an acceptance report.
 - `scripts/create_branch.py` creates isolated alternate-plot branches.
 - `scripts/create_plot_node_map.py` creates a v0.6 branch-local plot-node map skeleton.
 - `scripts/create_divergence_analysis.py` creates a v0.6 branch-local divergence-analysis skeleton.
 - `scripts/create_rewrite_plan.py` creates a v0.6 rewrite-plan prompt and replacement-route skeleton.
 - `scripts/create_branch_diff_report.py` creates a v0.6 branch diff report for user review.
 - `scripts/create_chapter_function_card.py` creates branch-local v0.5 chapter function cards.
-- `scripts/build_context_pack.py` creates a context-pack skeleton without reading full raw text; `--auto-select` can fill selectors from indexes and chapter/recent hints.
+- `scripts/build_context_pack.py` creates a context-pack skeleton without reading full raw text; `--auto-select` can fill selectors from indexes and chapter/recent hints, and `--use-retrieval-index` can add a v0.7 Retrieval Trace.
 - `scripts/create_draft_prompt.py` creates a drafting prompt from the context pack and chapter function card without writing prose; `--target-length` and `--style-strictness` are prompt controls only.
 - `scripts/create_quality_report.py` creates a review template and can create a review prompt under `branches/<branch>/reviews/`.
 - `scripts/create_patch.py` creates pending post-write update patches.

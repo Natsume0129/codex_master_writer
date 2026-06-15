@@ -11,11 +11,12 @@ A novel project is a file-based knowledge base:
 - `canon/` stores original or confirmed base facts.
 - `branches/main/` stores the default continuation line.
 - `branches/<branch>/` stores alternate plotlines created by rewrite requests.
-- `indexes/` stores lightweight lookup files.
+- `indexes/` stores lightweight lookup files and the optional v0.7 `retrieval_index.jsonl`.
 - `context_packs/` stores task-specific context snapshots.
 - `pending_updates/` stores candidate bible updates after drafting or outlining.
 - `branches/<branch>/draft_prompts/` and `branches/<branch>/reviews/` store v0.5 writing and review workflow artifacts.
 - `branches/<branch>/rewrite/` stores v0.6 plot rewrite and divergence-analysis artifacts.
+- `indexes/retrieval_index.jsonl` stores v0.7 retrieval candidates derived from structured artifacts only.
 
 ## Project Directory
 
@@ -31,7 +32,7 @@ Important directories:
 
 ## Canon, Bible, Indexes, and Patches
 
-`canon/` is the confirmed or source-tracked foundation. It may contain inferred and uncertain facts, but those must be labeled. Indexes are navigation aids, not the source of truth. Patches are proposals; they do not update canon or branches automatically.
+`canon/` is the confirmed or source-tracked foundation. It may contain inferred and uncertain facts, but those must be labeled. Indexes are navigation aids, not the source of truth. `indexes/retrieval_index.jsonl` points to source files for deterministic lookup; it must not directly apply, merge, or override canon, extracted cards, branch artifacts, or pending patches. Patches are proposals; they do not update canon or branches automatically.
 
 ## Long-Form Boundary
 

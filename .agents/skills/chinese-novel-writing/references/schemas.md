@@ -10,6 +10,7 @@ These schemas define the expected shape of project files. YAML examples are temp
 - New v0.5 writing-control artifacts use `schema_version: "0.5"`: chapter function cards, draft prompts, quality review prompts, and patch review reports.
 - v0.5.1 does not introduce `schema_version: "0.5.1"`.
 - New v0.6 rewrite artifacts use `schema_version: "0.6"`: plot node maps, divergence analyses, replacement routes, rewrite plan prompts, and branch diff reports.
+- New v0.7 retrieval and audit artifacts use `schema_version: "0.7"`: retrieval index entries, retrieval query reports, context audit reports, and acceptance reports.
 - New v0.4 import and patch skeleton formats still use `schema_version: "0.4"` unless that specific format is migrated.
 - `output_mode` is the canonical output field. `preferred_output_mode` is an older requirements name and is not the current implementation field.
 - Important facts use `source`, `status`, and `confidence`. Do not reintroduce `fact_status`.
@@ -670,6 +671,102 @@ Required sections: summary, divergence point, impact radius, preserved plot node
 ## v0.6 Rewrite Plan Prompt
 
 Markdown prompt with metadata. It instructs Codex/model to read the context pack, plot node map, divergence analysis, and replacement routes; avoid `raw_text/full_text.txt`; keep outputs branch-local; and produce artifact updates rather than prose.
+
+## v0.7 Retrieval Index JSONL Entry
+
+Each line in `indexes/retrieval_index.jsonl` is one JSON object:
+
+```json
+{
+  "schema_version": "0.7",
+  "entry_id": "",
+  "source_type": "chunk_card | chapter_card | volume_summary | canon | bible | index | branch_config | divergence_point | rewrite_artifact | pending_patch | review | summary",
+  "source_file": "",
+  "branch": "main",
+  "chapter": "",
+  "volume": "",
+  "title": "",
+  "summary": "",
+  "keywords": [],
+  "characters": [],
+  "locations": [],
+  "items": [],
+  "organizations": [],
+  "terms": [],
+  "plot_threads": [],
+  "foreshadowing": [],
+  "timeline_ids": [],
+  "status": "confirmed | inferred | uncertain | user_override | deprecated | draft | unknown",
+  "confidence": "high | medium | low | unknown",
+  "source": [],
+  "updated_at": "",
+  "notes": ""
+}
+```
+
+Rules:
+
+- `source_file` must point to a structured artifact or be clearly missing in a report.
+- Do not store large prose excerpts.
+- `summary` must be an existing short summary, metadata value, heading, or bounded excerpt from structured artifacts; it must not be generated from raw text.
+- Unknown values stay empty or `unknown`; scripts must not guess.
+
+## v0.7 Retrieval Query Report
+
+Markdown with YAML frontmatter:
+
+```yaml
+---
+schema_version: "0.7"
+report_type: "retrieval_query_report"
+query: ""
+branch: ""
+chapter: ""
+generated_at: ""
+index_file: "indexes/retrieval_index.jsonl"
+top_k: 20
+---
+```
+
+Required sections: Query, Filters, Scoring Rules, Selected Candidates, Omitted Candidates, Missing Index Warnings, Suggested Context Selectors, Source Trace, and Next Action.
+
+Each candidate includes `entry_id`, `score`, `source_file`, `source_type`, `branch`, `chapter`, `matched_terms`, `status`, `confidence`, and `reason`.
+
+## v0.7 Context Audit Report
+
+Markdown with YAML frontmatter:
+
+```yaml
+---
+schema_version: "0.7"
+report_type: "context_audit_report"
+context_pack: ""
+branch: ""
+task: ""
+chapter: ""
+generated_at: ""
+status: "pass | warn | fail"
+---
+```
+
+Required sections: Summary, Budget, Source Trace, Branch Boundary Check, Raw Text Risk, Fact Envelope Check, Deprecated Fact Check, Oversized Sections, Missing Sections, Retrieval Trace Check, Suggestions, and Next Action.
+
+## v0.7 Acceptance Report
+
+Markdown with YAML frontmatter:
+
+```yaml
+---
+schema_version: "0.7"
+report_type: "acceptance_report"
+generated_at: ""
+status: "pass | warn | fail"
+repo_root: ""
+python: ""
+---
+```
+
+Required sections: Summary, Environment, Commands Run, Files Created, Compatibility Checks, v0.5 Flow, v0.6 Flow, v0.7 Flow, Raw Text Safety Checks, Canon/Main Pollution Checks, Failures, Warnings, and Next Action.
 
 ## Navigation Index Entry
 

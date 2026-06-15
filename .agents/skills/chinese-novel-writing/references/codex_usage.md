@@ -12,7 +12,7 @@ python .agents/skills/chinese-novel-writing/scripts/novel_project.py <subcommand
 
 Use lower-level scripts only when a task needs fine-grained control or direct compatibility with an existing workflow.
 
-Supported v0.6 subcommands:
+Supported v0.7 subcommands:
 
 - `init`
 - `split-import`
@@ -24,9 +24,13 @@ Supported v0.6 subcommands:
 - `create-bible-patch-batch`
 - `mark-done`
 - `build-indexes`
+- `build-retrieval-index`
+- `query-retrieval-index`
 - `new-branch`
 - `create-function-card`
 - `build-context-pack`
+- `audit-context-pack`
+- `acceptance-check`
 - `create-draft-prompt`
 - `create-plot-node-map`
 - `create-divergence-analysis`
@@ -117,6 +121,22 @@ python .agents/skills/chinese-novel-writing/scripts/novel_project.py build-conte
 
 The context pack must stay task-specific. It must not include full raw text or unrelated full canon files.
 
+For retrieval-index assisted context selection, use:
+
+```bash
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py build-retrieval-index --project-root ./projects/my-novel --include-branches --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py query-retrieval-index --project-root ./projects/my-novel --query "chapter 12 continuation context" --branch main --chapter 12 --top-k 10 --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py build-context-pack --project-root ./projects/my-novel --branch main --task continue_story --chapter 12 --use-retrieval-index --retrieval-query "chapter 12 continuation context" --write-audit --force
+```
+
+User request example:
+
+```text
+Find the context needed to continue chapter 12 from the current project materials, generate a context pack, and audit it.
+```
+
+Codex should run `build-retrieval-index`, `query-retrieval-index`, `build-context-pack --use-retrieval-index`, and `audit-context-pack` before draft, rewrite, or review work. The retrieval index is only a candidate list; verify facts from the referenced source files.
+
 Create a deterministic drafting prompt before writing prose:
 
 ```bash
@@ -162,7 +182,9 @@ Keep branch state local. Do not write branch timeline, character state, or fores
 Then build context and rewrite artifacts:
 
 ```bash
-python .agents/skills/chinese-novel-writing/scripts/novel_project.py build-context-pack --project-root ./projects/my-novel --branch villain-ally --task rewrite_plot --chapter 12 --user-request "protagonist allies with antagonist instead of killing them" --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py build-retrieval-index --project-root ./projects/my-novel --include-branches --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py query-retrieval-index --project-root ./projects/my-novel --query "protagonist antagonist alliance relationship change" --branch villain-ally --top-k 10 --force
+python .agents/skills/chinese-novel-writing/scripts/novel_project.py build-context-pack --project-root ./projects/my-novel --branch villain-ally --task rewrite_plot --chapter 12 --user-request "protagonist allies with antagonist instead of killing them" --use-retrieval-index --retrieval-query "protagonist antagonist alliance relationship change" --write-audit --force
 python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-plot-node-map --project-root ./projects/my-novel --branch villain-ally --force
 python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-divergence-analysis --project-root ./projects/my-novel --branch villain-ally --impact-radius level_2_relationship --force
 python .agents/skills/chinese-novel-writing/scripts/novel_project.py create-rewrite-plan --project-root ./projects/my-novel --branch villain-ally --force

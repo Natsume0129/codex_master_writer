@@ -39,6 +39,33 @@ Indexes are navigation aids, not durable truth. If index and canon disagree, pre
 
 v0.4 context packs include a schema marker. Markdown packs use `Schema version: 0.4`; YAML packs use `context_pack.schema_version`.
 
+## v0.7 Retrieval Trace And Audit
+
+`build-context-pack` keeps its default behavior. It uses the retrieval index only when the caller passes `--use-retrieval-index`.
+
+Typical v0.7 flow:
+
+```bash
+python scripts/novel_project.py build-retrieval-index --project-root ./projects/my-novel --include-branches --force
+python scripts/novel_project.py query-retrieval-index --project-root ./projects/my-novel --query "chapter 12 ally reveal" --branch main --top-k 10 --force
+python scripts/novel_project.py build-context-pack --project-root ./projects/my-novel --branch main --task continue_story --chapter 12 --use-retrieval-index --retrieval-query "chapter 12 ally reveal" --retrieval-top-k 10 --write-audit --force
+```
+
+The pack may include a `## Retrieval Trace` section with:
+
+- index file
+- query
+- selected candidate metadata
+- omitted count
+- candidate source files
+- warnings
+
+The trace is not source truth. It points Codex/model to source files that still need verification. Do not copy full candidate files into the pack; include only short summaries, selectors, and source references.
+
+`--context-budget-chars` is used by audit only. If the budget is exceeded, the audit reports a warning; it does not silently delete user-selected context.
+
+`audit-context-pack` checks budget, raw-text path references, possible raw full-text inclusion by size, branch boundaries, missing source/status/confidence markers, deprecated facts, oversized sections, and missing Retrieval Trace. It does not read `raw_text/full_text.txt` content.
+
 ## Default Structure
 
 ```yaml
@@ -92,6 +119,14 @@ context_pack:
     source_files: []
     notes: []
   retrieval_notes: []
+  retrieval_trace:
+    enabled: false
+    index_file: ""
+    query: ""
+    selected_candidates: []
+    omitted_count: 0
+    source_files: []
+    warnings: []
   missing_sections: []
 ```
 
